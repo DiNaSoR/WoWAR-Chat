@@ -1,0 +1,13 @@
+﻿## Interface: 100005
+## Title: WoWinArabic-Chat
+## Version: 10.00
+## Notes: The addon supports chat for entering and displaying messages in Arabic
+## Notes_ar: الوظيفة الإضافية تدعم الدردشة لإدخال وعرض الرسائل باللغة العربية
+## Notes_pl: Dodatek obsługuje czat do wprowadzanie i wyświetlania wiadomości po arabsku
+## Author: Platine
+## eMail: platine.wow@gmail.com
+## DefaultState: Enabled
+## LoadOnDemand: 0
+
+Arabic_Reshaper.lua
+WoWinArabic_Chat.lua
