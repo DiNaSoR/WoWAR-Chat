@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.07
+﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.10
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
@@ -85,7 +85,7 @@ end
 function CH_OnTextChanged()
    if (CH_ED_mode == 1) then        -- mamy tryb arabski
       if (CH_ED_insert == 0) then
-         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);      -- przesuń kursor na lewo
+         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:SetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
       end
    end
 end
@@ -94,15 +94,16 @@ end
 
 local function CH_AR_ON_OFF()
    local txt = DEFAULT_CHAT_FRAME.editBox:GetText();
-   if (CH_ED_mode == 0) then        -- przełącz na tryb arabski
+   if (CH_ED_mode == 0) then        -- mamy tryb EN - przełącz na tryb arabski
       DEFAULT_CHAT_FRAME.editBox:SetJustifyH("RIGHT");
-      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);         -- przesuń kursor na lewo
+      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);         -- przesuń kursor na skrajne lewo
       CH_ToggleButton:SetNormalFontObject("GameFontNormal");   -- litery AR żółte
       CH_ToggleButton:SetText("AR");
       CH_ED_mode = 1;      
       CH_InsertButton:Show();
    else
       DEFAULT_CHAT_FRAME.editBox:SetJustifyH("LEFT");
+      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(AS_UTF8len(txt));  -- przesuń kursor na skrajne prawo
       CH_ToggleButton:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
       CH_ToggleButton:SetText("EN");
       CH_ED_mode = 0;
