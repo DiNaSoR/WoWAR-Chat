@@ -56,20 +56,23 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
       local output = "";
       local playerLen = AS_UTF8len(string.sub(arg2, 1, poz-1));
 		local playerLink = CH_UTF8reverse(GetPlayerLink(arg2, ("[|cFFBC9F73%s|r]"):format(string.sub(arg2, 1, poz-1)), arg11));
+      local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME:GetFont();    -- odczytaj aktualną czcionkę, rozmiar i typ
       if (event == "CHAT_MSG_SAY") then
-         output = playerLink.." يتحدث: ";           -- said
-         local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME:GetFont(); -- odczytaj aktualną czcionkę, rozmiar i typ
+         output = playerLink..CH_UTF8reverse(" :يتحدث ");         -- said
          DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
          DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC, 45));   -- 4=count of unwritable characters (color)
       elseif (event == "CHAT_MSG_PARTY") then
          output = playerLink..": ";           
-         local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME:GetFont(); -- odczytaj aktualną czcionkę, rozmiar i typ
          DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
          DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC, 45));   -- 4=count of unwritable characters (color)
       elseif (event == "CHAT_MSG_WHISPER") then
-         output = playerLink.." همس: ";            -- whisped
+         output = playerLink..CH_UTF8reverse(" :همس ");           -- whisped
          local _fontW, _sizeW, _W = DEFAULT_CHAT_FRAME:GetFont(); -- odczytaj aktualną czcionkę, rozmiar i typ
          ChatFrame11:SetFont(CH_Font, _sizeW, _W);                -- na kanale WHISPER
+      elseif (event == "CHAT_MSG_YELL") then
+         output = playerLink..CH_UTF8reverse(" :يصرخ ");          -- yelled
+         DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
+         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC, 45));   -- 4=count of unwritable characters (color)
       else
          return false;  -- wyświetlaj tekst oryginalny w oknie czatu
       end   
@@ -85,7 +88,7 @@ end
 function CH_OnTextChanged()
    if (CH_ED_mode == 1) then        -- mamy tryb arabski
       if (CH_ED_insert == 0) then
-         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:SetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
+         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:GetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
       end
    end
 end
