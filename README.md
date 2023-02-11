@@ -1,5 +1,5 @@
 # WoWinArabic-Chat
-This is an addon for the MMORPG World of Warcraft that supports chat in Arabic. Test
+This is an addon for the MMORPG World of Warcraft that supports chat in Arabic.
 
 ## Features
 - The addon allows players to enter and display messages in Arabic
