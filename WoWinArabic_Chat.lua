@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.12
+﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.13
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
@@ -6,12 +6,68 @@
 
 -- General Variables
 local CH_version = GetAddOnMetadata("WoWinArabic_Chat", "Version");
-local CH_ED_mode = 0;      -- włączony tryb arabski, wyrównanie do prawej strony
-local CH_ED_insert = 0;    -- tryb przesuwania kursora po wpisaniu litery
+local CH_ctrFrame = CreateFrame("FRAME", "WoWinArabic-Chat");
+local CH_ED_mode = 0;           -- włączony tryb arabski, wyrównanie do prawej strony
+local CH_ED_cursor_move = 0;    -- tryb przesuwania kursora po wpisaniu litery (0-w lewo, 1-w prawo)
+local CH_BubblesArray = {};
+local limit_chars1 = 30;    -- max. number of 1 line on bubble (one-line bubble)
+local limit_chars2 = 50;    -- max. number of 2 line on bubble (two-lines bubble)
 
 -- fonty z arabskimi znakami
 local CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\calibri.ttf";
 
+
+-------------------------------------------------------------------------------------------------------
+
+local function CH_bubblizeText()
+   for _, bubble in pairs(C_ChatBubbles.GetAllChatBubbles()) do
+   -- Iterate the children, as the actual bubble content 
+   -- has been placed in a nameless subframe in 9.0.1.
+      for i = 1, bubble:GetNumChildren() do
+         local child = select(i, select(i, bubble:GetChildren()));
+         if not child:IsForbidden() then                       -- czy ramka nie jest zabroniona?
+            if (child:GetObjectType() == "Frame") and (child.String) and (child.Center) then
+            -- This is hopefully the frame with the content
+               for i = 1, child:GetNumRegions() do
+                  local region = select(i, child:GetRegions());
+                  for idx, iArray in ipairs(CH_BubblesArray) do      -- sprawdź, czy dane są właściwe (tekst oryg. się zgadza z zapisaną w tablicy)
+                     if region and not region:GetName() and region:IsVisible() and region.GetText and (region:GetText() == iArray[1]) then
+                        act_font = 18;
+                        region:SetFont(CH_Font, act_font);             -- ustaw arabską czcionkę oraz niezmienioną wielkość (13)
+                        local newText = AS_UTF8reverse(iArray[2]);   -- text reshaped
+                        if ((AS_UTF8len(newText) >= limit_chars2) or (region:GetHeight() > act_font*3)) then    -- 3 lines or more
+                           region:SetJustifyH("RIGHT");              -- wyrównanie do prawej strony (domyślnie jest CENTER)
+                           newText = CH_LineReverse(iArray[2], 3);
+                           region:SetText(newText);
+                        elseif ((AS_UTF8len(newText) >= limit_chars1) or (region:GetHeight() > act_font*2)) then   -- 2 lines
+                           region:SetJustifyH("RIGHT");              -- wyrównanie do prawej strony
+                           newText = CH_LineReverse(iArray[2], 2);
+                           region:SetText(newText);
+                        else                                         -- bubble in 1-line
+                           region:SetJustifyH("CENTER");             -- wyrównanie do środka
+                           region:SetText(newText);                  -- wpisz tu nasze tłumaczenie
+                        end
+                        region:SetWidth(CH_SpecifyBubbleWidth(newText, region));  -- określ nową szer. okna
+                        tremove(CH_BubblesArray, idx);               -- usuń zapamiętane dane z tablicy
+                     end
+                  end
+               end
+            end
+         end
+      end
+   end
+
+   for idx, iArray in ipairs(CH_BubblesArray) do            -- przeszukaj jeszcze raz tablicę
+      if (iArray[3] >= 100) then                            -- licznik osiągnął 100
+         tremove(CH_BubblesArray, idx);                     -- usuń zapamiętane dane z tablicy
+      else
+         iArray[3] = iArray[3]+1;                           -- zwiększ licznik (nie pokazał się dymek?)
+      end;
+   end;
+   if (#(CH_BubblesArray) == 0) then
+      CH_ctrFrame:SetScript("OnUpdate", nil);               -- wyłącz metodę Update, bo tablica pusta
+   end;
+end;
 
 -------------------------------------------------------------------------------------------------------
 
@@ -61,6 +117,8 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          output = playerLink..CH_UTF8reverse(" :يتحدث ");         -- said
          DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
          DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC)); 
+         tinsert(CH_BubblesArray, { [1] = arg1, [2] = CH_UTF8reverse(arg1), [3] = 1 });
+         CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);
       elseif (event == "CHAT_MSG_PARTY") then
          output = playerLink..": ";           
          DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
@@ -87,7 +145,7 @@ end
 
 function CH_OnTextChanged()
    if (CH_ED_mode == 1) then        -- mamy tryb arabski
-      if (CH_ED_insert == 0) then
+      if (CH_ED_cursor_move == 0) then
          DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:GetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
       end
    end
@@ -104,7 +162,7 @@ local function CH_AR_ON_OFF()
       CH_ToggleButton:SetText("AR");
       CH_ED_mode = 1;
       DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);         -- przesuń kursor na skrajne lewo
-      CH_ED_insert = 0;
+      CH_ED_cursor_move = 0;
       CH_InsertButton:SetText("←");
       CH_InsertButton:Show();
    else
@@ -113,8 +171,8 @@ local function CH_AR_ON_OFF()
       CH_ToggleButton:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
       CH_ToggleButton:SetText("EN");
       CH_ED_mode = 0;
-      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(AS_UTF8len(DEFAULT_CHAT_FRAME.editBox:GetText()));   -- przesuń kursor na skrajne prawo
-      CH_ED_insert = 1;
+      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(strlen(DEFAULT_CHAT_FRAME.editBox:GetText()));   -- przesuń kursor na skrajne prawo
+      CH_ED_cursor_move = 1;
       CH_InsertButton:SetText("→");
       CH_InsertButton:Hide();
    end
@@ -125,12 +183,12 @@ end
 -------------------------------------------------------------------------------------------------------
 
 local function CH_INS_ON_OFF()
-   if (CH_ED_insert == 0) then         -- mamy tryb przesuwania kursowa na lewo
+   if (CH_ED_cursor_move == 0) then         -- mamy tryb przesuwania kursowa na lewo
       CH_InsertButton:SetText("→");
-      CH_ED_insert = 1;                -- włącz tryb przesuwania na prawo od wpisanego znaku
+      CH_ED_cursor_move = 1;                -- włącz tryb przesuwania na prawo od wpisanego znaku
    else
       CH_InsertButton:SetText("←");
-      CH_ED_insert = 0;                -- włącz tryb przesuwania w lewo od wpisanego znaku
+      CH_ED_cursor_move = 0;                -- włącz tryb przesuwania w lewo od wpisanego znaku
    end
    DEFAULT_CHAT_FRAME.editBox:SetFocus();
 end
@@ -138,14 +196,32 @@ end
 -------------------------------------------------------------------------------------------------------
 
 local function CH_OnChar(self, character)
-   if (character ~= " ") then                            -- wprowadzono spację - nie zmienia trybu przesuwania
-      if (CH_Check_Arabic_Letters(character)) then       -- wprowadzono literę arabską
-         if (CH_ED_insert == 1) then        -- mamy tryb przesuwania w lewo - przełącz na tryb przesuwania w prawo od wpisanego znaku
-            CH_INS_ON_OFF();
-            DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:GetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
+   local spaces = "( )?؟!,.;:،";             -- letters that we treat as a space
+   if (AS_UTF8find(spaces, character)) then
+      if (CH_ED_cursor_move == 0) then       -- mamy tryb przesuwania w lewo
+         if (character == "(") then          -- nawiasy trzeba zamienić ( --> )
+            local poz0 = self:GetCursorPosition();
+            local oldtxt = self:GetText();
+            local newtxt = AS_UTF8sub(oldtxt, 1, poz0-1) .. ")" .. AS_UTF8sub(oldtxt, poz0+1);
+            self:SetText(newtxt);
+            self:SetCursorPosition(poz0);
+         elseif (character == ")") then
+            local poz0 = self:GetCursorPosition();
+            local oldtxt = self:GetText();
+            local newtxt = AS_UTF8sub(oldtxt, 1, poz0-1) .. "(" .. AS_UTF8sub(oldtxt, poz0+1);
+            self:SetText(newtxt);
+            self:SetCursorPosition(poz0);
          end
+         self:SetCursorPosition(self:GetCursorPosition()-strlen(character));  -- przesuń kursor na lewo od ostatniego znaku (spacja, nawiasy, przecinek, kropka)
+      end         
+   else
+      if ((character >= "؀") and (character <= "ݿ")) then   -- it is a arabic letter
+         if (CH_ED_cursor_move == 1) then    -- mamy tryb przesuwania w prawo - przełącz na tryb przesuwania w lewo od wpisanego znaku
+            CH_INS_ON_OFF();                 -- zmień na przesuwanie w lewo
+         end
+         self:SetCursorPosition(self:GetCursorPosition()-strlen(character));  -- przesuń kursor na lewo od aktualnej litery
       else                                               -- wprowadzono literę inną niż arabska
-         if (CH_ED_insert == 0) then       -- mamy tryb przesuwania w prawo - przełącz na tryb przesuwania w lewo od wpisanego znaku
+         if (CH_ED_cursor_move == 0) then    -- mamy tryb przesuwania w lewo - przełącz na tryb przesuwania w prawo od wpisanego znaku
             CH_INS_ON_OFF();
          end
       end
@@ -273,6 +349,7 @@ function CH_LineChat(txt, font_size, more_chars)
             nextstr = nextstr .. char1;
          end
          
+         CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
          CH_TestLine.text:SetText(AS_UTF8reverse(newstr));
          if ((CH_TestLine.text:GetHeight() > font_size*1.5) and (link_start_stop == false)) then   -- tekst nie mieści się już w 1 linii
             newstr = AS_UTF8sub(newstr, 1, AS_UTF8len(newstr)-AS_UTF8len(nextstr));   -- tekst do ostatniej spacji
@@ -343,6 +420,84 @@ function CH_UTF8reverse(s)
    end
    return newstr;
 end
+
+-------------------------------------------------------------------------------------------------------
+
+function CH_mysplit (inputstr, sep)
+   if (sep == nil) then
+      sep = "%s";
+   end
+   local t={};
+   for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+      table.insert(t, str);
+   end
+   return t;
+end
+
+-------------------------------------------------------------------------------------------------------
+
+function CH_SpecifyBubbleWidth(str_txt, reg)
+   local vlines = CH_mysplit(str_txt,"\n");
+   local _fontR, _sizeR, _R = reg:GetFont();   -- odczytaj aktualną czcionkę i rozmiar
+   local max_width = 20;
+   for _, v in ipairs(vlines) do 
+      if (CH_TestLine == nil) then     -- a own frame for displaying the translation of texts and determining the length
+         CH_CreateTestLine();
+      end   
+      CH_TestLine:Hide();     -- the frame is invisible in the game
+      CH_TestLine.text:SetFont(_fontR, _sizeR, _R);
+      local newTextWidth = (0.35*act_font+0.8)*AS_UTF8len(v)*1.5;  -- maksymalna szerokość okna dymku
+      CH_TestLine.text:SetWidth(newTextWidth);
+      CH_TestLine.text:SetText(v);
+      local minTextWidth = (0.35*act_font+0.8)*AS_UTF8len(v)*0.8;  -- minimalna szerokość ograniczająca pętlę
+      
+      while ((CH_TestLine.text:GetHeight() < _sizeR*1.5) and (minTextWidth < newTextWidth)) do
+         newTextWidth = newTextWidth - 5;
+         CH_TestLine.text:SetWidth(newTextWidth);
+      end
+      if (newTextWidth > max_width) then
+         max_width = newTextWidth;
+      end
+   end
+   return max_width + 5;
+end
+
+-------------------------------------------------------------------------------------------------------
+
+-- Reverses the order of UTF-8 letters in (limit) lines: 2 or 3 
+function CH_LineReverse(s, limit)
+   local retstr = "";
+   if (s and limit) then                           -- check if arguments are not empty (nil)
+		local bytes = strlen(s);
+      local count_chars = AS_UTF8len(s);           -- number of characters in a string s
+      local limit_chars = count_chars / limit;     -- limit characters on one line (+-)
+		local pos = 1;
+		local charbytes;
+		local newstr = "";
+      local counter = 0;
+      local char1;
+		while pos <= bytes do
+			c = strbyte(s, pos);                      -- read the character (odczytaj znak)
+			charbytes = AS_UTF8charbytes(s, pos);    -- count of bytes (liczba bajtów znaku)
+         char1 = strsub(s, pos, pos + charbytes - 1);
+			newstr = newstr .. char1;
+			pos = pos + charbytes;
+         
+         counter = counter + 1;
+         if ((char1 >= "A") and (char1 <= "z")) then
+            counter = counter + 1;        -- latin letters are 2x wider, then Arabic
+         end
+         if ((char1 == " ") and (counter>=limit_chars-3)) then      -- break line here
+            retstr = retstr .. AS_UTF8reverse(newstr) .. "\n";
+            newstr = "";
+            counter = 0;
+         end
+      end
+      retstr = retstr .. AS_UTF8reverse(newstr);
+      retstr = string.gsub(retstr, "\n ", "\n");        -- space after newline code is useless
+   end
+	return retstr;
+end 
 
 -------------------------------------------------------------------------------------------------------
 

@@ -173,7 +173,7 @@ function AS_UTF8len(s)
    if (s) then          -- argument checking
       local pos = 1;
       local bytes = strlen(s);
-      while pos <= bytes do
+      while (pos <= bytes) do
          len = len + 1;
          pos = pos + AS_UTF8charbytes(s, pos);
       end
@@ -265,9 +265,9 @@ function AS_UTF8reverse(s)
       local char0 = '';
       local char1, char2, char3;
       local charbytes1, charbytes2, charbytes3;
-      local position = -1;       -- not specified
+      local position = -1;           -- not specified
       local nextletter = 0;
-      local spaces = '( )?؟!,.;:،'; -- letters that we treat as a space
+      local spaces = '( )?؟!,.;:،';  -- letters that we treat as a space
 
       while (pos <= bytes) do
          charbytes1 = AS_UTF8charbytes(s, pos);        -- count of bytes (liczba bajtów znaku)
