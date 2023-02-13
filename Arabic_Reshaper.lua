@@ -1,4 +1,4 @@
-﻿-- Arabic Reshaper for WoWinArabic addons (2023.02.02)
+﻿-- Arabic Reshaper for WoWinArabic addons (2023.02.12)
 -- Author: Platine  (e-mail: platine.wow@gmail.com)
 -- Based on UTF8 library by Kyle Smith
 -- Special thanks to DragonArab for create letter reshaping tables and ligatures.
@@ -201,6 +201,58 @@ function AS_UTF8find(s, c)
 		end
    end
 	return odp;
+end
+
+
+-- functions identically to string.sub except that i and j are UTF-8 characters
+-- instead of bytes
+function AS_UTF8sub(s, i, j)
+	j = j or -1;            -- argument defaults, is not required
+
+	-- argument checking
+	if (type(s) ~= "string") then
+		error("bad argument #1 to 'AS_UTF8sub' (string expected, got ".. type(s).. ")");
+	end
+	if (type(i) ~= "number") then
+		error("bad argument #2 to 'AS_UTF8sub' (number expected, got ".. type(i).. ")");
+	end
+	if (type(j) ~= "number") then
+		error("bad argument #3 to 'AS_UTF8sub' (number expected, got ".. type(j).. ")");
+	end
+
+	local pos = 1;
+	local bytes = strlen(s);
+	local len = 0;
+
+	-- only set l if i or j is negative
+	local l = (i >= 0 and j >= 0) or AS_UTF8len(s);
+	local startChar = (i >= 0) and i or l + i + 1;
+	local endChar   = (j >= 0) and j or l + j + 1;
+
+	-- can't have start before end!
+	if (startChar > endChar) then
+		return "";
+	end
+
+	-- byte offsets to pass to string.sub
+	local startByte, endByte = 1, bytes;
+
+	while (pos <= bytes) do
+		len = len + 1;
+
+		if (len == startChar) then
+			startByte = pos;
+		end
+
+		pos = pos + AS_UTF8charbytes(s, pos);
+
+		if (len == endChar) then
+			endByte = pos - 1;
+			break;
+		end
+	end
+
+	return strsub(s, startByte, endByte);
 end
 
 

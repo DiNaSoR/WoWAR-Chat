@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.10
+﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.12
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
@@ -60,11 +60,11 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
       if (event == "CHAT_MSG_SAY") then
          output = playerLink..CH_UTF8reverse(" :يتحدث ");         -- said
          DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
-         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC, 45));   -- 4=count of unwritable characters (color)
+         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC)); 
       elseif (event == "CHAT_MSG_PARTY") then
          output = playerLink..": ";           
          DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
-         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC, 45));   -- 4=count of unwritable characters (color)
+         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC)); 
       elseif (event == "CHAT_MSG_WHISPER") then
          output = playerLink..CH_UTF8reverse(" :همس ");           -- whisped
          local _fontW, _sizeW, _W = DEFAULT_CHAT_FRAME:GetFont(); -- odczytaj aktualną czcionkę, rozmiar i typ
@@ -72,7 +72,7 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
       elseif (event == "CHAT_MSG_YELL") then
          output = playerLink..CH_UTF8reverse(" :يصرخ ");          -- yelled
          DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
-         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC, 45));   -- 4=count of unwritable characters (color)
+         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC)); 
       else
          return false;  -- wyświetlaj tekst oryginalny w oknie czatu
       end   
@@ -128,6 +128,7 @@ local function CH_INS_ON_OFF()
    end
    DEFAULT_CHAT_FRAME.editBox:SetFocus();
 end
+
 -------------------------------------------------------------------------------------------------------
 
 local function CH_OnEvent(self, event, name, ...)
@@ -208,40 +209,60 @@ end
 -- function formats arabic text for display in a left-justified chat line
 function CH_LineChat(txt, font_size, more_chars)
    local retstr = "";
+  
    if (txt and font_size) then
-      local more_chars = more_chars or 0;
-      local chat_width = DEFAULT_CHAT_FRAME:GetWidth();             -- width of 1 chat line
-      local chars_limit = chat_width / (0.35*font_size+0.8)*1.1 ;   -- so much max. characters can fit on one line
+      if (CH_TestLine == nil) then     -- a own frame for displaying the translation of texts and determining the length
+         CH_CreateTestLine();
+      end   
 		local bytes = strlen(txt);
 		local pos = 1;
       local counter = 0;
       local second = 0;
+      local link_start_stop = false;
 		local newstr = "";
+      local nextstr = "";
 		local charbytes;
       local newstrR;
-      local char1;
+      local char1, char2;
 		while (pos <= bytes) do
+         counter = counter + 1;
 			c = strbyte(txt, pos);                      -- read the character (odczytaj znak)
-			charbytes = AS_UTF8charbytes(txt, pos);    -- count of bytes (liczba bajtów znaku)
+			charbytes = AS_UTF8charbytes(txt, pos);     -- count of bytes (liczba bajtów znaku)
          char1 = strsub(txt, pos, pos + charbytes - 1);
 			newstr = newstr .. char1;
-			pos = pos + charbytes;
-         
-         counter = counter + 1;
-         if ((char1 >= "A") and (char1 <= "z")) then
-            counter = counter + 1;        -- latin letters are 2x wider, then Arabic
+			pos = pos + charbytes;                 -- text for Platine: اختبر TEST ربتخا
+         if (pos <= bytes) then
+	         charbytes = AS_UTF8charbytes(txt, pos);     -- count of bytes (liczba bajtów znaku)
+            char2 = strsub(txt, pos, pos + charbytes - 1);
+         else
+            char2 = "";
          end
-         if ((char1 == " ") and (counter-more_chars>=chars_limit-3)) then      -- break line here
+         if ((char1..char2 == "r|") and (pos > 70)) then           -- start of the link
+            link_start_stop = true;
+         elseif ((char1..char2 == "c|") and (pos > 70)) then       -- end of the link
+            link_start_stop = false;
+         end
+         
+         if ((char1 == " ") and (link_start_stop == false)) then     -- mamy spację, ale nie wewnątrz linku
+            nextstr = "";
+         else
+            nextstr = nextstr .. char1;
+         end
+         
+         CH_TestLine.text:SetText(AS_UTF8reverse(newstr));
+         if ((CH_TestLine.text:GetHeight() > font_size*1.5) and (link_start_stop == false)) then   -- tekst nie mieści się już w 1 linii
+            newstr = AS_UTF8sub(newstr, 1, AS_UTF8len(newstr)-AS_UTF8len(nextstr));   -- tekst do ostatniej spacji
             newstrR = CH_AddSpaces(AS_UTF8reverse(newstr), second);
             retstr = retstr .. newstrR .. "\n";
-            newstr = "";
+            newstr = nextstr;
+            nextstr = "";
             counter = 0;
-            more_chars = 0;
-            second = 2;
+            second = 2;  
          end
       end
       newstrR = CH_AddSpaces(AS_UTF8reverse(newstr), second);
       retstr = retstr .. newstrR;
+      retstr = string.gsub(retstr, " \n", "\n");        -- space before newline code is useless
       retstr = string.gsub(retstr, "\n ", "\n");        -- space after newline code is useless
    end
 	return retstr;
@@ -252,8 +273,7 @@ end
 -- the function appends spaces to the left of the given text so that the text is aligned to the right
 function CH_AddSpaces(txt, snd)                                 -- snd = second or next line (interspace 2 on right)
    local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME:GetFont();     -- read current font, size and flag of the chat object
-   local chat_widthC = DEFAULT_CHAT_FRAME:GetWidth();           -- width of 1 chat line
-   local chars_limitC = chat_widthC / (0.35*_sizeC+0.8);        -- so much max. characters can fit on one line
+   local chars_limitC = 150;    -- so much max. characters can fit on one line
    
    if (CH_TestLine == nil) then     -- a own frame for displaying the translation of texts and determining the length
       CH_CreateTestLine();
@@ -269,7 +289,6 @@ function CH_AddSpaces(txt, snd)                                 -- snd = second 
       text = " "..text;
       CH_TestLine.text:SetText(text);
    end
-
    if (count < chars_limitC) then    -- failed to properly add leading spaces
       for i=4,count-snd,1 do         -- spaces are added to the left of the text
          txt = " "..txt;
