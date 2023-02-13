@@ -102,7 +102,10 @@ local function CH_AR_ON_OFF()
       DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);         -- przesuń kursor na skrajne lewo
       CH_ToggleButton:SetNormalFontObject("GameFontNormal");   -- litery AR żółte
       CH_ToggleButton:SetText("AR");
-      CH_ED_mode = 1;      
+      CH_ED_mode = 1;
+      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);         -- przesuń kursor na skrajne lewo
+      CH_ED_insert = 0;
+      CH_InsertButton:SetText("←");
       CH_InsertButton:Show();
    else
       DEFAULT_CHAT_FRAME.editBox:SetJustifyH("LEFT");
@@ -110,6 +113,9 @@ local function CH_AR_ON_OFF()
       CH_ToggleButton:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
       CH_ToggleButton:SetText("EN");
       CH_ED_mode = 0;
+      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(AS_UTF8len(DEFAULT_CHAT_FRAME.editBox:GetText()));   -- przesuń kursor na skrajne prawo
+      CH_ED_insert = 1;
+      CH_InsertButton:SetText("→");
       CH_InsertButton:Hide();
    end
    ChatEdit_ActivateChat(DEFAULT_CHAT_FRAME.editBox);
@@ -124,9 +130,26 @@ local function CH_INS_ON_OFF()
       CH_ED_insert = 1;                -- włącz tryb przesuwania na prawo od wpisanego znaku
    else
       CH_InsertButton:SetText("←");
-      CH_ED_insert = 0;
+      CH_ED_insert = 0;                -- włącz tryb przesuwania w lewo od wpisanego znaku
    end
    DEFAULT_CHAT_FRAME.editBox:SetFocus();
+end
+
+-------------------------------------------------------------------------------------------------------
+
+local function CH_OnChar(self, character)
+   if (character ~= " ") then                            -- wprowadzono spację - nie zmienia trybu przesuwania
+      if (CH_Check_Arabic_Letters(character)) then       -- wprowadzono literę arabską
+         if (CH_ED_insert == 1) then        -- mamy tryb przesuwania w lewo - przełącz na tryb przesuwania w prawo od wpisanego znaku
+            CH_INS_ON_OFF();
+            DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:GetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
+         end
+      else                                               -- wprowadzono literę inną niż arabska
+         if (CH_ED_insert == 0) then       -- mamy tryb przesuwania w prawo - przełącz na tryb przesuwania w lewo od wpisanego znaku
+            CH_INS_ON_OFF();
+         end
+      end
+   end
 end
 
 -------------------------------------------------------------------------------------------------------
@@ -138,7 +161,8 @@ local function CH_OnEvent(self, event, name, ...)
       DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
       local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME.editBox:GetFont(); -- odczytaj aktualną czcionkę, rozmiar i typ
       DEFAULT_CHAT_FRAME.editBox:SetFont(CH_Font, _sizeC, _C);
-      DEFAULT_CHAT_FRAME.editBox:SetScript("OnTextChanged", CH_OnTextChanged);      -- aby zmieniał pozycję kursora przy wprowadzaniu liter arabskich
+--      DEFAULT_CHAT_FRAME.editBox:SetScript("OnTextChanged", CH_OnTextChanged);      -- aby zmieniał pozycję kursora przy wprowadzaniu liter arabskich
+      DEFAULT_CHAT_FRAME.editBox:SetScript("OnChar", CH_OnChar);      -- aby zmieniał pozycję kursora przy wprowadzaniu kolejnych liter
       
       CH_ToggleButton = CreateFrame("Button", nil, DEFAULT_CHAT_FRAME, "UIPanelButtonTemplate");
       CH_ToggleButton:SetWidth(34);
