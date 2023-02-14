@@ -192,7 +192,7 @@ function AS_UTF8find(s, c)
       local char1;
 
 		while (pos <= bytes) do
-         charbytes = AS_UTF8charbytes(s, pos);        -- count of bytes of the character
+         charbytes = AS_UTF8charbytes(s, pos);         -- count of bytes of the character
          char1 = strsub(s, pos, pos + charbytes - 1);  -- current character from the string s
 			if (char1 == c) then
             odp = true;

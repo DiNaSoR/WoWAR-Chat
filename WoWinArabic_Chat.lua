@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.13
+﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.14
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
@@ -10,6 +10,7 @@ local CH_ctrFrame = CreateFrame("FRAME", "WoWinArabic-Chat");
 local CH_ED_mode = 0;           -- włączony tryb arabski, wyrównanie do prawej strony
 local CH_ED_cursor_move = 0;    -- tryb przesuwania kursora po wpisaniu litery (0-w lewo, 1-w prawo)
 local CH_BubblesArray = {};
+local CH_BuforEditBox = {};
 local limit_chars1 = 30;    -- max. number of 1 line on bubble (one-line bubble)
 local limit_chars2 = 50;    -- max. number of 2 line on bubble (two-lines bubble)
 
@@ -143,17 +144,7 @@ end
 
 -------------------------------------------------------------------------------------------------------
 
-function CH_OnTextChanged()
-   if (CH_ED_mode == 1) then        -- mamy tryb arabski
-      if (CH_ED_cursor_move == 0) then
-         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:GetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
-      end
-   end
-end
-
--------------------------------------------------------------------------------------------------------
-
-local function CH_AR_ON_OFF()
+local function CH_AR_ON_OFF()       -- funkcja włącz/wyłącza tryb arabski
    local txt = DEFAULT_CHAT_FRAME.editBox:GetText();
    if (CH_ED_mode == 0) then        -- mamy tryb EN - przełącz na tryb arabski
       DEFAULT_CHAT_FRAME.editBox:SetJustifyH("RIGHT");
@@ -182,15 +173,25 @@ end
 
 -------------------------------------------------------------------------------------------------------
 
-local function CH_INS_ON_OFF()
-   if (CH_ED_cursor_move == 0) then         -- mamy tryb przesuwania kursowa na lewo
+local function CH_INS_ON_OFF()            -- funkcja przełącza przesuwanie kursowa w zależności od wprowadzonej litery
+   if (CH_ED_cursor_move == 0) then       -- mamy tryb przesuwania kursowa na lewo
       CH_InsertButton:SetText("→");
-      CH_ED_cursor_move = 1;                -- włącz tryb przesuwania na prawo od wpisanego znaku
+      CH_ED_cursor_move = 1;              -- włącz tryb przesuwania na prawo od wpisanego znaku
    else
       CH_InsertButton:SetText("←");
-      CH_ED_cursor_move = 0;                -- włącz tryb przesuwania w lewo od wpisanego znaku
+      CH_ED_cursor_move = 0;              -- włącz tryb przesuwania w lewo od wpisanego znaku
    end
    DEFAULT_CHAT_FRAME.editBox:SetFocus();
+end
+
+-------------------------------------------------------------------------------------------------------
+
+function CH_OnTextChanged()
+   if (CH_ED_mode == 1) then        -- mamy tryb arabski
+      if (CH_ED_cursor_move == 0) then
+         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:GetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
+      end
+   end
 end
 
 -------------------------------------------------------------------------------------------------------
@@ -230,6 +231,65 @@ end
 
 -------------------------------------------------------------------------------------------------------
 
+function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key
+   if (CH_ED_mode == 1) then        -- mamy tryb arabski
+      if (key == "BACKSPACE") then  -- usuń znak poprzedzający, czyli 1 na prawo
+         local buf = self:GetText();
+         local pos = self:GetCursorPosition();
+         if (strlen(buf) > 0) then         -- nie jest pusty tekst
+            if (pos < strlen(buf)) then                  -- kursor nie jest na początku tekstu, skrajnie na prawo
+               local charbytes;
+               if (pos == 0) then          -- kursor jest na końcu tekstu, skrejnie w lewo
+                  charbytes = AS_UTF8charbytes(buf, 1);
+               else
+                  charbytes = AS_UTF8charbytes(buf, pos);   -- liczba bajtów 1 znaku w pozycji pos
+               end;
+               self:SetCursorPosition(pos+charbytes);    -- przesuń kursor o 1 znak w prawo, aby usunięcie było tego znaku
+            else
+               self:SetText(buf.." ");
+               self:SetCursorPosition(strlen(buf)+1);    -- przesuń kursor na początek tekstu w prawo, aby usunąć tę spację
+            end
+         end
+         
+      elseif (key == "DELETE") then                -- usuń znak następujący, czyli 1 na lewo
+         local buf = self:GetText();
+         local pos = self:GetCursorPosition();
+         if (pos > 0) then                         -- kursor nie jest na końcu tekstu, skrajnie w lewo
+            -- ustal znak z lewej strony
+            pos = pos - 1;
+            if (pos > 0) then
+               local c = strbyte(buf, pos);
+               while (c >= 128 and c <= 191) do
+                  pos = pos - 1;
+                  c = strbyte(bbuf, pos);
+               end
+            end
+            self:SetCursorPosition(pos);    -- przesuń kursor o 1 znak w lewo, aby usunięcie było tego znaku
+         else                             -- kursor jest na końcu tekstu, nie ma co usuwać - dodaj spację na końcu
+            self:SetText(" "..buf);
+            self:SetCursorPosition(0);    -- przesuń kursor na koniec tekstu w lewo, aby usunąć tę spację
+         end
+         
+      end
+   end
+end
+
+-------------------------------------------------------------------------------------------------------
+
+function CH_OnKeyUp(self, key)      -- pyszczono klawisz key
+   if (CH_ED_mode == 1) then        -- mamy tryb arabski
+      if (key == "HOME") then       -- skocz kursorem na początek tekstu, czyli na skreajne prawo
+         self:SetCursorPosition(strlen(self:GetText()));
+         
+      elseif (key == "END") then    -- skocz kursorem na koniec tekstu, czyli na skrajne lewo
+         self:SetCursorPosition(0);
+         
+      end
+   end
+end
+
+-------------------------------------------------------------------------------------------------------
+
 local function CH_OnEvent(self, event, name, ...)
    if (event=="ADDON_LOADED" and name=="WoWinArabic_Chat") then
       CH_Frame:UnregisterEvent("ADDON_LOADED");
@@ -238,7 +298,9 @@ local function CH_OnEvent(self, event, name, ...)
       local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME.editBox:GetFont(); -- odczytaj aktualną czcionkę, rozmiar i typ
       DEFAULT_CHAT_FRAME.editBox:SetFont(CH_Font, _sizeC, _C);
 --      DEFAULT_CHAT_FRAME.editBox:SetScript("OnTextChanged", CH_OnTextChanged);      -- aby zmieniał pozycję kursora przy wprowadzaniu liter arabskich
-      DEFAULT_CHAT_FRAME.editBox:SetScript("OnChar", CH_OnChar);      -- aby zmieniał pozycję kursora przy wprowadzaniu kolejnych liter
+      DEFAULT_CHAT_FRAME.editBox:SetScript("OnChar", CH_OnChar);       -- aby zmieniał pozycję kursora przy wprowadzaniu kolejnych liter
+      DEFAULT_CHAT_FRAME.editBox:SetScript("OnKeyDown", CH_OnKeyDown); -- wciśnięto jakiś klawisz
+      DEFAULT_CHAT_FRAME.editBox:SetScript("OnKeyUp", CH_OnKeyUp);     -- puszczono jakiś klawisz
       
       CH_ToggleButton = CreateFrame("Button", nil, DEFAULT_CHAT_FRAME, "UIPanelButtonTemplate");
       CH_ToggleButton:SetWidth(34);
