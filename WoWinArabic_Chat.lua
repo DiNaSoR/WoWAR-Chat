@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.14
+﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.16
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
@@ -8,9 +8,12 @@
 local CH_version = GetAddOnMetadata("WoWinArabic_Chat", "Version");
 local CH_ctrFrame = CreateFrame("FRAME", "WoWinArabic-Chat");
 local CH_ED_mode = 0;           -- włączony tryb arabski, wyrównanie do prawej strony
-local CH_ED_cursor_move = 0;    -- tryb przesuwania kursora po wpisaniu litery (0-w lewo, 1-w prawo)
+local CH_ED_cursor_move = 0;    -- tryb przesuwania kursora po wpisaniu litery (0-w prawo, 1-w lewo)
 local CH_BubblesArray = {};
 local CH_BuforEditBox = {};
+local CH_BuforLength = 0;
+local CH_BuforCursor = 0;
+local CH_last_letter = "";
 local limit_chars1 = 30;    -- max. number of 1 line on bubble (one-line bubble)
 local limit_chars2 = 50;    -- max. number of 2 line on bubble (two-lines bubble)
 
@@ -24,23 +27,24 @@ local function CH_bubblizeText()
    for _, bubble in pairs(C_ChatBubbles.GetAllChatBubbles()) do
    -- Iterate the children, as the actual bubble content 
    -- has been placed in a nameless subframe in 9.0.1.
-      for i = 1, bubble:GetNumChildren() do
-         local child = select(i, select(i, bubble:GetChildren()));
-         if not child:IsForbidden() then                       -- czy ramka nie jest zabroniona?
+      for j = 1, bubble:GetNumChildren() do
+         local child = select(j, select(j, bubble:GetChildren()));
+         if (not child:IsForbidden()) then                           -- czy ramka nie jest zabroniona?
             if (child:GetObjectType() == "Frame") and (child.String) and (child.Center) then
             -- This is hopefully the frame with the content
                for i = 1, child:GetNumRegions() do
                   local region = select(i, child:GetRegions());
+                  act_font = 18;
                   for idx, iArray in ipairs(CH_BubblesArray) do      -- sprawdź, czy dane są właściwe (tekst oryg. się zgadza z zapisaną w tablicy)
-                     if region and not region:GetName() and region:IsVisible() and region.GetText and (region:GetText() == iArray[1]) then
-                        act_font = 18;
-                        region:SetFont(CH_Font, act_font);             -- ustaw arabską czcionkę oraz niezmienioną wielkość (13)
+                     if (region and not region:GetName() and region:IsVisible() and region.GetText and (region:GetText() == iArray[1])) then
                         local newText = AS_UTF8reverse(iArray[2]);   -- text reshaped
-                        if ((AS_UTF8len(newText) >= limit_chars2) or (region:GetHeight() > act_font*3)) then    -- 3 lines or more
+                        local okrWidth = AS_UTF8len(newText);
+                        region:SetFont(CH_Font, act_font);     -- ustaw arabską czcionkę oraz wielkość
+                        if ((okrWidth >= limit_chars2) or (region:GetHeight() > act_font*3)) then    -- 3 lines or more
                            region:SetJustifyH("RIGHT");              -- wyrównanie do prawej strony (domyślnie jest CENTER)
                            newText = CH_LineReverse(iArray[2], 3);
                            region:SetText(newText);
-                        elseif ((AS_UTF8len(newText) >= limit_chars1) or (region:GetHeight() > act_font*2)) then   -- 2 lines
+                        elseif ((okrWidth >= limit_chars1) or (region:GetHeight() > act_font*2)) then   -- 2 lines
                            region:SetJustifyH("RIGHT");              -- wyrównanie do prawej strony
                            newText = CH_LineReverse(iArray[2], 2);
                            region:SetText(newText);
@@ -72,6 +76,25 @@ end;
 
 -------------------------------------------------------------------------------------------------------
 
+local function CH_Usun_Linki(txt)       -- funkcja usuwa kody linków przedmiotów
+   local pocz, koniec, final;
+   local txt1 = txt;
+   pocz = string.find(txt1, "|cffffffff|Hitem");
+   while (pocz and pocz > 0) do         -- znalazł początek linku
+      koniec = string.find(txt1, "|h");
+      final = string.find(txt1, "|h|r");
+      if (koniec and final and (koniec > 0) and (pocz < koniec) and (koniec < final)) then
+         txt1 = string.sub(txt1, 1, pocz-1) .. string.sub(txt1, koniec+3, final-2) .. string.sub(txt1, final+4);
+      else
+         break;
+      end
+      pocz = string.find(txt1, "|cffffff|Hitem");
+   end
+   return txt1;
+end
+
+-------------------------------------------------------------------------------------------------------
+
 local function CH_Check_Arabic_Letters(txt)
    local result = false;
    if (txt) then
@@ -83,7 +106,7 @@ local function CH_Check_Arabic_Letters(txt)
          charbytes0 = AS_UTF8charbytes(txt, pos);         -- count of bytes (liczba bajtów znaku)
          char0 = strsub(txt, pos, pos + charbytes0 - 1);  -- current character
 			pos = pos + charbytes0;
-         if ((char0 >= "؀") and (char0 <= "ݿ")) then      -- it is a arabic letter
+         if (char0 >= "؀") then      -- it is a arabic letter
             result = true;
             break;
          end
@@ -96,7 +119,6 @@ end
 
 local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
    local colorText = "";
-   
    if (event == "CHAT_MSG_SAY") then
       colorText = "|cFFFFFFFF";
    elseif (event == "CHAT_MSG_PARTY") then
@@ -104,7 +126,7 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
    elseif (event == "CHAT_MSG_YELL") then
       colorText = "|cFFFF4040";
    elseif (event == "CHAT_MSG_WHISPER") then
-      colorText = "|cFFFFB5EB";
+      colorText = "|cFFF882FF";
    end
 
    local is_arabic = CH_Check_Arabic_Letters(arg1);
@@ -112,35 +134,33 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
       local poz = string.find(arg2, "-");
       local output = "";
       local playerLen = AS_UTF8len(string.sub(arg2, 1, poz-1));
-		local playerLink = CH_UTF8reverse(GetPlayerLink(arg2, ("[|cFFBC9F73%s|r]"):format(string.sub(arg2, 1, poz-1)), arg11));
-      local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME:GetFont();    -- odczytaj aktualną czcionkę, rozmiar i typ
+		local playerLink = GetPlayerLink(arg2, ("[|cFFBC9F73%s|r]"):format(string.sub(arg2, 1, poz-1)), arg11);
+      local _fontC, _sizeC, _C = self:GetFont();   -- odczytaj aktualną czcionkę, rozmiar i typ
+      self:SetFont(CH_Font, _sizeC, _C);           -- załaduj arabską czcionkę
       if (event == "CHAT_MSG_SAY") then
-         output = playerLink..CH_UTF8reverse(" :يتحدث ");         -- said
-         DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
-         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC)); 
-         tinsert(CH_BubblesArray, { [1] = arg1, [2] = CH_UTF8reverse(arg1), [3] = 1 });
-         CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);
+         output = arg1..AS_UTF8reverse(" يتحدث: ")..playerLink;   -- said (forma właściwa)
+         local czystyArg = CH_Usun_Linki(arg1);
+         tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = CH_UTF8reverse(czystyArg), [3] = 1 });
+         CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
+      elseif (event == "CHAT_MSG_WHISPER") then
+         if (self:GetName() == "ChatFrame1") then        -- jest komunikat WHISPER w głównym oknie czatu
+            return true;         -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
+         end
+         output = arg1..AS_UTF8reverse(" همس: ")..playerLink;     -- whisped
+      elseif (event == "CHAT_MSG_YELL") then
+         output = arg1..AS_UTF8reverse(" يصرخ: ")..playerLink;    -- yelled
       elseif (event == "CHAT_MSG_PARTY") then
          output = playerLink..": ";           
-         DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
-         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC)); 
-      elseif (event == "CHAT_MSG_WHISPER") then
-         output = playerLink..CH_UTF8reverse(" :همس ");           -- whisped
-         local _fontW, _sizeW, _W = DEFAULT_CHAT_FRAME:GetFont(); -- odczytaj aktualną czcionkę, rozmiar i typ
-         ChatFrame11:SetFont(CH_Font, _sizeW, _W);                -- na kanale WHISPER
-      elseif (event == "CHAT_MSG_YELL") then
-         output = playerLink..CH_UTF8reverse(" :يصرخ ");          -- yelled
-         DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
-         DEFAULT_CHAT_FRAME:AddMessage(colorText..CH_LineChat(output..CH_UTF8reverse(arg1), _sizeC)); 
       else
          return false;  -- wyświetlaj tekst oryginalny w oknie czatu
       end   
+
+      self:AddMessage(colorText..CH_LineChat(output, _sizeC)); 
       return true;      -- nie wyświetlaj oryginalnego tekstu
    else
       return false;     -- wyświetlaj tekst oryginalny w oknie czatu
    end   
 end
-
 
 -------------------------------------------------------------------------------------------------------
 
@@ -151,19 +171,32 @@ local function CH_AR_ON_OFF()       -- funkcja włącz/wyłącza tryb arabski
       DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);         -- przesuń kursor na skrajne lewo
       CH_ToggleButton:SetNormalFontObject("GameFontNormal");   -- litery AR żółte
       CH_ToggleButton:SetText("AR");
+      CH_ToggleButton2:SetNormalFontObject("GameFontNormal");  -- litery AR żółte
+      CH_ToggleButton2:SetText("AR");
       CH_ED_mode = 1;
       DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);         -- przesuń kursor na skrajne lewo
-      CH_ED_cursor_move = 0;
+      CH_ED_cursor_move = 1;
       CH_InsertButton:SetText("←");
       CH_InsertButton:Show();
+      if (CH_BuforLength > 1) then        -- trzeba odwrócić kolejność liter
+         local temp_Bufor = {};
+         for key, value in pairs(CH_BuforEditBox) do
+            temp_Bufor[key] = value;
+         end
+         for i = 1, CH_BuforLength do
+            CH_BuforEditBox[i] = temp_Bufor[CH_BuforLength-i+1];
+         end
+      end
    else
       DEFAULT_CHAT_FRAME.editBox:SetJustifyH("LEFT");
       DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(AS_UTF8len(txt));  -- przesuń kursor na skrajne prawo
       CH_ToggleButton:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
       CH_ToggleButton:SetText("EN");
+      CH_ToggleButton2:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
+      CH_ToggleButton2:SetText("EN");
       CH_ED_mode = 0;
-      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(strlen(DEFAULT_CHAT_FRAME.editBox:GetText()));   -- przesuń kursor na skrajne prawo
-      CH_ED_cursor_move = 1;
+      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(strlen(txt));      -- przesuń kursor na skrajne prawo
+      CH_ED_cursor_move = 0;
       CH_InsertButton:SetText("→");
       CH_InsertButton:Hide();
    end
@@ -173,65 +206,123 @@ end
 
 -------------------------------------------------------------------------------------------------------
 
-local function CH_INS_ON_OFF()            -- funkcja przełącza przesuwanie kursowa w zależności od wprowadzonej litery
-   if (CH_ED_cursor_move == 0) then       -- mamy tryb przesuwania kursowa na lewo
+local function CH_INS_ON_OFF()            -- funkcja przełącza przesuwanie kursora w zależności od wprowadzonej litery
+   if (CH_ED_cursor_move == 1) then       -- mamy tryb przesuwania kursowa na lewo
       CH_InsertButton:SetText("→");
-      CH_ED_cursor_move = 1;              -- włącz tryb przesuwania na prawo od wpisanego znaku
+      CH_ED_cursor_move = 0;              -- włącz tryb przesuwania na prawo od wpisanego znaku
    else
       CH_InsertButton:SetText("←");
-      CH_ED_cursor_move = 0;              -- włącz tryb przesuwania w lewo od wpisanego znaku
+      CH_ED_cursor_move = 1;              -- włącz tryb przesuwania w lewo od wpisanego znaku
    end
    DEFAULT_CHAT_FRAME.editBox:SetFocus();
+   CH_InsertButton:Show();
 end
 
 -------------------------------------------------------------------------------------------------------
 
-function CH_OnTextChanged()
-   if (CH_ED_mode == 1) then        -- mamy tryb arabski
-      if (CH_ED_cursor_move == 0) then
-         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(DEFAULT_CHAT_FRAME.editBox:GetCursorPosition()-1);      -- przesuń kursor na lewo od aktualnej litery
-      end
+function CH_Oblicz_Pozycje(poz)        -- oblicza pozycję cursora w oknie edycji
+   local pozycja = 0;
+   if (CH_ED_cursor_move == 1) then    -- mamy tryb przesuwania w lewo (litera arabska)
+      poz = poz - 1;
+   end
+   for i = 1, poz do
+      pozycja = pozycja + strlen(CH_BuforEditBox[i]);   -- liczba bajtów znaku
+   end
+   return pozycja;
+end
+
+-------------------------------------------------------------------------------------------------------
+
+local function CH_OnShow()       -- otworzony został editBox
+   if (not CH_ToggleButton:IsVisible()) then
+      CH_ToggleButton2:Show();
+   end
+   CH_BuforEditBox = {};
+   CH_BuforLength = 0;
+   CH_BuforCursor = 0;
+   CH_last_letter = "";
+   if (CH_ED_mode == 1) then     -- tryb arabski
+      CH_ED_cursor_move = 1;     -- przesuwanie w lewo
+      CH_InsertButton:SetText("←");
+   else                          -- tryb angielski
+      CH_ED_cursor_move = 0;     -- przesuwanie w prawo
+      CH_InsertButton:SetText("→");
    end
 end
 
 -------------------------------------------------------------------------------------------------------
 
-local function CH_OnChar(self, character)
-   local spaces = "( )?؟!,.;:،";             -- letters that we treat as a space
-   if (AS_UTF8find(spaces, character)) then
-      if (CH_ED_cursor_move == 0) then       -- mamy tryb przesuwania w lewo
-         if (character == "(") then          -- nawiasy trzeba zamienić ( --> )
-            local poz0 = self:GetCursorPosition();
-            local oldtxt = self:GetText();
-            local newtxt = AS_UTF8sub(oldtxt, 1, poz0-1) .. ")" .. AS_UTF8sub(oldtxt, poz0+1);
-            self:SetText(newtxt);
-            self:SetCursorPosition(poz0);
-         elseif (character == ")") then
-            local poz0 = self:GetCursorPosition();
-            local oldtxt = self:GetText();
-            local newtxt = AS_UTF8sub(oldtxt, 1, poz0-1) .. "(" .. AS_UTF8sub(oldtxt, poz0+1);
-            self:SetText(newtxt);
-            self:SetCursorPosition(poz0);
-         end
-         self:SetCursorPosition(self:GetCursorPosition()-strlen(character));  -- przesuń kursor na lewo od ostatniego znaku (spacja, nawiasy, przecinek, kropka)
-      end         
-   else
-      if ((character >= "؀") and (character <= "ݿ")) then   -- it is a arabic letter
-         if (CH_ED_cursor_move == 1) then    -- mamy tryb przesuwania w prawo - przełącz na tryb przesuwania w lewo od wpisanego znaku
-            CH_INS_ON_OFF();                 -- zmień na przesuwanie w lewo
-         end
-         self:SetCursorPosition(self:GetCursorPosition()-strlen(character));  -- przesuń kursor na lewo od aktualnej litery
-      else                                               -- wprowadzono literę inną niż arabska
-         if (CH_ED_cursor_move == 0) then    -- mamy tryb przesuwania w lewo - przełącz na tryb przesuwania w prawo od wpisanego znaku
-            CH_INS_ON_OFF();
+local function CH_OnHide()       -- został zamknięty editBox
+   CH_ToggleButton2:Hide();
+end
+   
+-------------------------------------------------------------------------------------------------------
+
+local function CH_OnChar(self, character)    -- wprowadzono znak litery z klawiatury
+   local last_pos = self:GetCursorPosition();
+   CH_BuforLength = CH_BuforLength + 1;      -- bufor powiększył się o 1 element
+   if (CH_BuforLength == 1) then             -- pierwsza litera w edytorze
+      tinsert(CH_BuforEditBox, 1, character);
+      CH_BuforCursor = 1;                    -- kursor na pierwszym znaku
+      if (((character >= "؀") and (character <= "ݿ")) or ((string.sub(character,1,1) == "|") and (CH_ED_mode == 1))) then   -- mamy literę arabską
+         self:SetCursorPosition(0);
+         CH_ED_cursor_move = 1;              -- włącz przesuwanie w lewo
+         CH_InsertButton:SetText("←");
+         CH_InsertButton:Show();
+      else
+         self:SetCursorPosition(AS_UTF8charbytes(character));
+         CH_ED_cursor_move = 0;              -- włącz przesuwanie w prawo
+         if (CH_ED_mode == 1) then
+            CH_InsertButton:SetText("→");
+            CH_InsertButton:Show();
          end
       end
+   else                                      -- wprowadzono kolejną literę
+      if (CH_ED_cursor_move == 1) then       -- mamy tryb przesuwania w lewo (litera arabska)
+         if (CH_BuforCursor == 0) then
+            CH_BuforCursor = CH_BuforCursor + 1;      -- tylko gdy = 0
+         end
+         tinsert(CH_BuforEditBox, CH_BuforCursor, character);
+      else                                   -- tu jest tryb przesuwania w prawo (litera łacińska)
+         CH_BuforCursor = CH_BuforCursor + 1;
+         tinsert(CH_BuforEditBox, CH_BuforCursor, character);
+      end
+      local spaces = "( )?؟!,.;:،";             -- letters that we treat as a space
+      if (AS_UTF8find(spaces, character) == false) then       -- nie wprowadzono znaku z listy spaces      
+         if (((character >= "؀") and (character <= "ݿ")) or ((string.sub(character,1,1) == "|") and (CH_ED_mode == 1))) then  -- mamy literę arabską
+            if (CH_ED_cursor_move == 0) then    -- mamy tryb przesuwania w prawo - przełącz na tryb przesuwania w lewo od wpisanego znaku
+               CH_INS_ON_OFF();                 -- zmień na przesuwanie w lewo
+            end
+         else                                                 -- wprowadzono literę inną niż arabska
+            if (CH_ED_cursor_move == 1) then    -- mamy tryb przesuwania w lewo - przełącz na tryb przesuwania w prawo od wpisanego znaku
+               CH_INS_ON_OFF();
+            end
+         end
+      end
+      local newtext = "";
+      if (CH_ED_mode == 1) then        -- tryb arabski: reshaping text into editBox
+         for i = CH_BuforLength, 1, -1 do
+            if (string.sub(CH_BuforEditBox[i],1,1) == "|") then    -- mamy tu link
+               newtext = newtext .. CH_UTF8reverse(CH_BuforEditBox[i]);    -- trzeba odwrócić znaki w linku
+            else
+               newtext = newtext .. CH_BuforEditBox[i];
+            end
+         end
+         newtext = AS_UTF8reverse(newtext);     -- odwróć kolejność liter + ReShaping
+      else
+         for i = 1, CH_BuforLength do
+            newtext = newtext .. CH_BuforEditBox[i];
+         end
+      end
+      self:SetText(newtext);
+      self:SetCursorPosition(CH_Oblicz_Pozycje(CH_BuforCursor));
    end
+   CH_last_letter = character;
 end
 
 -------------------------------------------------------------------------------------------------------
 
-function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key
+local function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key: spradź czy wciśnięto BACKSPACE lub DELETE
    if (CH_ED_mode == 1) then        -- mamy tryb arabski
       if (key == "BACKSPACE") then  -- usuń znak poprzedzający, czyli 1 na prawo
          local buf = self:GetText();
@@ -250,7 +341,14 @@ function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key
                self:SetCursorPosition(strlen(buf)+1);    -- przesuń kursor na początek tekstu w prawo, aby usunąć tę spację
             end
          end
-         
+         if (CH_BuforLength > CH_BuforCursor) then
+            if (CH_BuforCursor == 0) then
+               tremove(CH_BuforEditBox, 1);
+            else
+               tremove(CH_BuforEditBox, CH_BuforCursor+1);
+            end
+            CH_BuforLength = CH_BuforLength - 1;
+         end
       elseif (key == "DELETE") then                -- usuń znak następujący, czyli 1 na lewo
          local buf = self:GetText();
          local pos = self:GetCursorPosition();
@@ -269,23 +367,72 @@ function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key
             self:SetText(" "..buf);
             self:SetCursorPosition(0);    -- przesuń kursor na koniec tekstu w lewo, aby usunąć tę spację
          end
-         
+         if (CH_BuforCursor > 0) then
+            tremove(CH_BuforEditBox, CH_BuforCursor);
+            CH_BuforCursor = CH_BuforCursor - 1;
+            CH_BuforLength = CH_BuforLength - 1;
+         end
+      end
+   else           -- mamy tryb angielski
+      if (key == "DELETE") then                -- usuń bieżący znak z bufora
+         if (CH_BuforLength > CH_BuforCursor) then
+            if (self:GetCursorPosition() == 0) then
+               tremove(CH_BuforEditBox, 1);
+            else
+               tremove(CH_BuforEditBox, CH_BuforCursor+1);
+            end
+            CH_BuforLength = CH_BuforLength - 1;
+         elseif (CH_BuforLength == 0) then
+            CH_BuforCursor = 0;
+         end
+      elseif (key == "BACKSPACE") then         -- usuń znak poprzedzający, czyli 1 na lewo
+         if (CH_BuforCursor > 1) then
+            tremove(CH_BuforEditBox, CH_BuforCursor);
+            CH_BuforCursor = CH_BuforCursor - 1;
+            CH_BuforLength = CH_BuforLength - 1;
+         end
+      
       end
    end
 end
 
 -------------------------------------------------------------------------------------------------------
 
-function CH_OnKeyUp(self, key)      -- pyszczono klawisz key
+local function CH_OnKeyUp(self, key)      -- puszczono klawisz key: sprawdź czy wciśnięto HOME, END, LEFT i RIGHT
    if (CH_ED_mode == 1) then        -- mamy tryb arabski
       if (key == "HOME") then       -- skocz kursorem na początek tekstu, czyli na skreajne prawo
          self:SetCursorPosition(strlen(self:GetText()));
-         
+         CH_BuforCursor = CH_BuforLength;
+         CH_ED_cursor_move = 1;
+         CH_InsertButton:SetText("←");
       elseif (key == "END") then    -- skocz kursorem na koniec tekstu, czyli na skrajne lewo
          self:SetCursorPosition(0);
-         
+         CH_BuforCursor = 0;
+         CH_ED_cursor_move = 1;
+         CH_InsertButton:SetText("←");
+      end
+   else                             -- mamy tryb angielski
+      if (key == "HOME") then       -- skocz kursorem na początek tekstu, czyli na skreajne lewo
+         CH_BuforCursor = 0;
+         CH_ED_cursor_move = 0;
+         CH_InsertButton:SetText("→");
+      elseif (key == "END") then    -- skocz kursorem na koniec tekstu, czyli na skrajne prawo
+         CH_BuforCursor = CH_BuforLength;
+         CH_ED_cursor_move = 0;
+         CH_InsertButton:SetText("→");
       end
    end
+   if ((key == "LEFT") and (CH_BuforCursor > 1)) then       -- wciśnięto klawisz "strzałka w lewo" alt+LEFT
+      CH_BuforCursor = CH_BuforCursor - 1;
+   end
+   if ((key == "RIGHT") and (CH_BuforCursor < CH_BuforLength)) then    -- wciśnięto klawisz "strzałka w prawo" alt+RIGHT
+      CH_BuforCursor = CH_BuforCursor + 1;
+   end
+--local aaa = "";
+--for i = 1, CH_BuforLength, 1 do
+--   aaa = aaa.." "..CH_BuforEditBox[i];
+--end
+--print("CH_BuforLength="..CH_BuforLength,"CH_BuforCursor="..CH_BuforCursor,"Dane:"..aaa);
 end
 
 -------------------------------------------------------------------------------------------------------
@@ -301,6 +448,7 @@ local function CH_OnEvent(self, event, name, ...)
       DEFAULT_CHAT_FRAME.editBox:SetScript("OnChar", CH_OnChar);       -- aby zmieniał pozycję kursora przy wprowadzaniu kolejnych liter
       DEFAULT_CHAT_FRAME.editBox:SetScript("OnKeyDown", CH_OnKeyDown); -- wciśnięto jakiś klawisz
       DEFAULT_CHAT_FRAME.editBox:SetScript("OnKeyUp", CH_OnKeyUp);     -- puszczono jakiś klawisz
+      DEFAULT_CHAT_FRAME.editBox:SetScript("OnShow", CH_OnShow);       -- otworzono okno edycji tekstu
       
       CH_ToggleButton = CreateFrame("Button", nil, DEFAULT_CHAT_FRAME, "UIPanelButtonTemplate");
       CH_ToggleButton:SetWidth(34);
@@ -311,6 +459,16 @@ local function CH_OnEvent(self, event, name, ...)
       CH_ToggleButton:ClearAllPoints();
       CH_ToggleButton:SetPoint("TOPRIGHT", DEFAULT_CHAT_FRAME, "BOTTOMLEFT", -1, -6);
       CH_ToggleButton:SetScript("OnClick", CH_AR_ON_OFF);
+
+      CH_ToggleButton2 = CreateFrame("Button", nil, DEFAULT_CHAT_FRAME.editBox, "UIPanelButtonTemplate");
+      CH_ToggleButton2:SetWidth(34);
+      CH_ToggleButton2:SetHeight(20);
+      CH_ToggleButton2:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
+      CH_ToggleButton2:SetText("EN");
+      CH_ToggleButton2:Hide();
+      CH_ToggleButton2:ClearAllPoints();
+      CH_ToggleButton2:SetPoint("TOPRIGHT", DEFAULT_CHAT_FRAME.editBox, "TOPLEFT", 4, -4);
+      CH_ToggleButton2:SetScript("OnClick", CH_AR_ON_OFF);
 
       CH_InsertButton = CreateFrame("Button", nil, DEFAULT_CHAT_FRAME.editBox, "UIPanelButtonTemplate");
       CH_InsertButton:SetWidth(28);
@@ -369,7 +527,7 @@ end
 -------------------------------------------------------------------------------------------------------
 
 -- function formats arabic text for display in a left-justified chat line
-function CH_LineChat(txt, font_size, more_chars)
+function CH_LineChat(txt, font_size)
    local retstr = "";
   
    if (txt and font_size) then
@@ -377,7 +535,7 @@ function CH_LineChat(txt, font_size, more_chars)
          CH_CreateTestLine();
       end   
 		local bytes = strlen(txt);
-		local pos = 1;
+		local pos = bytes;
       local counter = 0;
       local second = 0;
       local link_start_stop = false;
@@ -385,45 +543,49 @@ function CH_LineChat(txt, font_size, more_chars)
       local nextstr = "";
 		local charbytes;
       local newstrR;
-      local char1, char2;
-		while (pos <= bytes) do
-         counter = counter + 1;
-			c = strbyte(txt, pos);                      -- read the character (odczytaj znak)
-			charbytes = AS_UTF8charbytes(txt, pos);     -- count of bytes (liczba bajtów znaku)
-         char1 = strsub(txt, pos, pos + charbytes - 1);
-			newstr = newstr .. char1;
-			pos = pos + charbytes;                 -- text for Platine: اختبر TEST ربتخا
-         if (pos <= bytes) then
-	         charbytes = AS_UTF8charbytes(txt, pos);     -- count of bytes (liczba bajtów znaku)
-            char2 = strsub(txt, pos, pos + charbytes - 1);
-         else
-            char2 = "";
+      local char1 = "";
+      local char2 = "";
+      local last_space = 0;
+		while (pos > 0) do       -- UWAGA: tekst arabski jest podany wprost, od prawej: sprawdzaj długość od prawej
+         c = strbyte(txt, pos);
+         while (c >= 128) and (c <= 191) do
+            pos = pos - 1;
+            c = strbyte(txt, pos);
          end
-         if ((char1..char2 == "r|") and (pos > 70)) then           -- start of the link
+      
+         charbytes = AS_UTF8charbytes(txt, pos);
+         char1 = strsub(txt, pos, pos + charbytes - 1);
+
+			newstr = char1 .. newstr;        -- sprawdzamy znaki od ostatnich
+         
+         if ((char1..char2 == "|r") and (pos < bytes-70)) then           -- start of the link
             link_start_stop = true;
-         elseif ((char1..char2 == "c|") and (pos > 70)) then       -- end of the link
+         elseif ((char1..char2 == "|c") and (pos < bytes-70)) then       -- end of the link
             link_start_stop = false;
          end
          
          if ((char1 == " ") and (link_start_stop == false)) then     -- mamy spację, ale nie wewnątrz linku
+            last_space = 0;
             nextstr = "";
          else
-            nextstr = nextstr .. char1;
+            nextstr = char1 .. nextstr;
+            last_space = last_space + 1;
          end
-         
          CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
-         CH_TestLine.text:SetText(AS_UTF8reverse(newstr));
+         CH_TestLine.text:SetText(newstr);
          if ((CH_TestLine.text:GetHeight() > font_size*1.5) and (link_start_stop == false)) then   -- tekst nie mieści się już w 1 linii
-            newstr = AS_UTF8sub(newstr, 1, AS_UTF8len(newstr)-AS_UTF8len(nextstr));   -- tekst do ostatniej spacji
-            newstrR = CH_AddSpaces(AS_UTF8reverse(newstr), second);
+            newstr = AS_UTF8sub(newstr, last_space+1);   -- tekst od ostatniej spacji
+            newstrR = CH_AddSpaces(newstr, second);
             retstr = retstr .. newstrR .. "\n";
             newstr = nextstr;
             nextstr = "";
             counter = 0;
-            second = 2;  
+            second = 3;  
          end
+         char2 = char1;    -- zapamiętaj znak, potrzebne w następnej pętli
+         pos = pos - 1;
       end
-      newstrR = CH_AddSpaces(AS_UTF8reverse(newstr), second);
+      newstrR = CH_AddSpaces(newstr, second);
       retstr = retstr .. newstrR;
       retstr = string.gsub(retstr, " \n", "\n");        -- space before newline code is useless
       retstr = string.gsub(retstr, "\n ", "\n");        -- space after newline code is useless
@@ -485,7 +647,7 @@ end
 
 -------------------------------------------------------------------------------------------------------
 
-function CH_mysplit (inputstr, sep)
+function CH_mysplit(inputstr, sep)
    if (sep == nil) then
       sep = "%s";
    end
