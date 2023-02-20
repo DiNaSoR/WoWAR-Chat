@@ -144,6 +144,7 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
       colorB =  string.format("%x",ChatTypeInfo.WHISPER.b * 255);
       colorText = "|cFF"..colorR..colorG..colorB;
    end
+--print(event)      
 
    local is_arabic = CH_Check_Arabic_Letters(arg1);
    if (is_arabic) then
@@ -170,8 +171,15 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
             return true;         -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
          end
          output = arg1..AS_UTF8reverse(" همس: ")..playerLink;     -- whisped
-      elseif (event == "CHAT_MSG_PARTY") then
-         output = playerLink..": ";           
+      elseif ((event == "CHAT_MSG_PARTY") or (event == "CHAT_MSG_PARTY_LEADER")) then
+         if (event == "CHAT_MSG_PARTY_LEADER") then
+            output = arg1.." :"..playerLink.." [Party Leader]";
+         else
+            output = arg1.." :"..playerLink.." [Party]";
+         end
+         local czystyArg = CH_Usun_Linki(arg1);
+         tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
+         CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
       else
          return false;  -- wyświetlaj tekst oryginalny w oknie czatu
       end   
@@ -627,12 +635,13 @@ local function CH_OnEvent(self, event, name, ...)
       CH_InsertButton:SetPoint("TOPLEFT", DEFAULT_CHAT_FRAME.editBox, "TOPRIGHT", -9, -7);
       CH_InsertButton:SetScript("OnClick", CH_INS_ON_OFF);
 
-      ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", CH_ChatFilter)
-      ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY", CH_ChatFilter)
-      ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL", CH_ChatFilter)
-      ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", CH_ChatFilter)
-      ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD", CH_ChatFilter)
-      ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID", CH_ChatFilter)
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY_LEADER", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID", CH_ChatFilter);
       DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat ver. "..CH_version.." - started");
       CH_Frame.ADDON_LOADED = nil;
    end
