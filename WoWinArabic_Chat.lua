@@ -150,11 +150,18 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
       local poz = string.find(arg2, "-");
       local output = "";
       local playerLen = AS_UTF8len(string.sub(arg2, 1, poz-1));
-		local playerLink = GetPlayerLink(arg2, ("[|cFFBC9F73%s|r]"):format(string.sub(arg2, 1, poz-1)), arg11);
+      local _, className = UnitClass(string.sub(arg2, 1, poz-1)); 
+      local classColorTable = RAID_CLASS_COLORS[className];
+		local playerLink = GetPlayerLink(arg2, ("[|c"..classColorTable.colorStr.."%s|r]"):format(string.sub(arg2, 1, poz-1)), arg11);
       local _fontC, _sizeC, _C = self:GetFont();   -- odczytaj aktualną czcionkę, rozmiar i typ
       self:SetFont(CH_Font, _sizeC, _C);           -- załaduj arabską czcionkę
       if (event == "CHAT_MSG_SAY") then
          output = arg1..AS_UTF8reverse(" يتحدث: ")..playerLink;   -- said (forma właściwa)
+         local czystyArg = CH_Usun_Linki(arg1);
+         tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
+         CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
+      elseif (event == "CHAT_MSG_YELL") then
+         output = arg1..AS_UTF8reverse(" يصرخ: ")..playerLink;    -- yelled
          local czystyArg = CH_Usun_Linki(arg1);
          tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
          CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
@@ -163,8 +170,6 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
             return true;         -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
          end
          output = arg1..AS_UTF8reverse(" همس: ")..playerLink;     -- whisped
-      elseif (event == "CHAT_MSG_YELL") then
-         output = arg1..AS_UTF8reverse(" يصرخ: ")..playerLink;    -- yelled
       elseif (event == "CHAT_MSG_PARTY") then
          output = playerLink..": ";           
       else
@@ -491,7 +496,7 @@ local function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key: spradź cz
             end
          end
       end
-      if (key == "ENTER") then                    -- wciśnięto klawisz ENTER
+      if ((key == "ENTER") and (CH_ED_mode == 1)) then                    -- wciśnięto klawisz ENTER
          local newtext = "";
          for i = CH_BuforLength, 1, -1 do
             if (string.sub(CH_BuforEditBox[i],1,1) == "|") then           -- mamy tu link do przedmiotu
