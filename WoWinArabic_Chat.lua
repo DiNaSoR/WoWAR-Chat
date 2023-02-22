@@ -14,12 +14,13 @@ local CH_BuforEditBox = {};
 local CH_BuforLength = 0;
 local CH_BuforCursor = 0;
 local CH_last_letter = "";
-local limit_chars1 = 35;    -- max. number of 1 line on bubble (one-line bubble)
-local limit_chars2 = 60;    -- max. number of 2 line on bubble (two-lines bubble)
+local limit_chars1 = 35;        -- max. number of 1 line on bubble (one-line bubble)
+local limit_chars2 = 60;        -- max. number of 2 line on bubble (two-lines bubble)
 local CH_key_ctrl = false;
 local CH_key_shift = false;
 local CH_key_alt = false;
 local CH_highlight_text = false;
+local CH_BSize = 18;            -- default size of chat bubbles
 
 -- fonty z arabskimi znakami
 local CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\calibri.ttf";
@@ -38,7 +39,7 @@ local function CH_bubblizeText()
             -- This is hopefully the frame with the content
                for i = 1, child:GetNumRegions() do
                   local region = select(i, child:GetRegions());
-                  act_font = 18;
+                  act_font = CH_BSize;
                   for idx, iArray in ipairs(CH_BubblesArray) do      -- sprawdź, czy dane są właściwe (tekst oryg. się zgadza z zapisaną w tablicy)
                      if (region and not region:GetName() and region:IsVisible() and region.GetText and (region:GetText() == iArray[1])) then
                         local newText = iArray[2];   -- text received
