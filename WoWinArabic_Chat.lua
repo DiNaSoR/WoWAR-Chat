@@ -20,7 +20,7 @@ local CH_key_ctrl = false;
 local CH_key_shift = false;
 local CH_key_alt = false;
 local CH_highlight_text = false;
-local CH_BSize = 18;            -- default size of chat bubbles
+local CH_BSize = 14;            -- default size of chat bubbles
 
 -- fonty z arabskimi znakami
 local CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\calibri.ttf";
@@ -32,6 +32,7 @@ local CH_Interface = {
    settings    = "خيارات إضافية",      -- Addon settings 
    font_activ  = "تفعيل وظيفة تغيير حجم الخط في الفقاعات",  -- activate the function of changing the font size in the bubbles 
    font_size   = "حجم الخط",    -- font size 
+   font_activ2 = "تفعيل وظيفة تغيير حجم الخط في الفقاعات GNINRAW DIAR",  -- activate the function of changing the font size in Raid Warning Text 
    }; 
 
 -------------------------------------------------------------------------------------------------------
@@ -233,6 +234,9 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          output = arg1.." :"..playerLink.." [Raid Leader]";
       elseif (event == "CHAT_MSG_RAID_WARNING") then
          local _font1, _size1, _3 = RaidWarningFrameSlot1:GetFont(); -- odczytaj aktualną czcionkę i rozmiar
+         if (CH_PS["setsizeW"] == "1") then    -- mamy włączoną wielkość czcionki do komunikatu Raid Warning
+            _size1 = tonumber(CH_PM["fontsizeW"]);
+         end
          RaidWarningFrameSlot1:SetFont(CH_Font, _size1);
          RaidWarningFrameSlot2:SetFont(CH_Font, _size1);
          output = arg1.." :"..playerLink.." [Raid Warning]";
@@ -487,6 +491,9 @@ local function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key: spradź cz
    elseif ((key == "LALT") or (key == "RALT")) then      -- wciśnięta klawisz ALT
       CH_key_alt = true;
    end
+   if (CH_key_ctrl and (key == "A") and (strlen(self:GetText())>0)) then  -- wciśnięto klawisze Ctrl+A: zaznaczono tekst w editBox
+      CH_highlight_text = true;
+   end
    if (CH_ToggleButton:IsEnabled()) then                 -- obsługa bufora włączona?
       if (CH_ED_mode == 1) then        -- mamy tryb arabski
          if (key == "BACKSPACE") then  -- usuń znak poprzedzający, czyli 1 na prawo
@@ -616,9 +623,6 @@ local function CH_OnKeyUp(self, key)      -- puszczono klawisz key: sprawdź czy
          end
          return;
       end
-      if (CH_key_ctrl and (key == "A") and (strlen(self:GetText())>0)) then  -- wciśnięto klawisza Ctrl+A: zaznaczono tekst w editBox
-         CH_highlight_text = true;
-      end
       if (CH_ED_mode == 1) then        -- mamy tryb arabski
          if (key == "HOME") then       -- skocz kursorem na początek tekstu, czyli na skrajne prawo
             self:SetCursorPosition(strlen(self:GetText()));
@@ -677,7 +681,13 @@ local function CH_CheckVars()
      CH_PM["setsize"] = "0";   
   end
   if (not CH_PM["fontsize"] ) then  -- wielkość czcionki
-     CH_PM["fontsize"] = "20";
+     CH_PM["fontsize"] = "14";
+  end
+  if (not CH_PM["setsizeW"] ) then   -- uaktywnij zmiany wielkości czcionki komunikatu Raid Warning
+     CH_PM["setsizeW"] = "0";   
+  end
+  if (not CH_PM["fontsizeW"] ) then  -- wielkość czcionki komunikatu Raid Warning
+     CH_PM["fontsizeW"] = "20";
   end
 end
   
@@ -687,11 +697,19 @@ local function CH_SetCheckButtonState()
   CHCheckButton1:SetValue(CH_PM["active"]=="1");
   CHCheckSize:SetValue(CH_PM["setsize"]=="1");
   local fontsize = tonumber(CH_PM["fontsize"]);
-  CHslider:SetValue(fontsize);
+  CHslider1:SetValue(fontsize);
   if (CH_PM["setsize"]=="1") then
      CHOpis1:SetFont(CH_Font, fontsize);
   else   
-     CHOpis1:SetFont(CH_Font, 20);
+     CHOpis1:SetFont(CH_Font, 14);
+  end
+  CHWarningSize:SetValue(CH_PM["setsizeW"]=="1");
+  fontsize = tonumber(CH_PM["fontsizeW"]);
+  CHslider2:SetValue(fontsize);
+  if (CH_PM["setsizeW"]=="1") then
+     CHOpis2:SetFont(CH_Font, fontsize);
+  else   
+     CHOpis2:SetFont(CH_Font, 20);
   end
 end
 
@@ -739,37 +757,37 @@ CHCheckSize.Text:SetText(AS_UTF8reverse(CH_Interface.font_activ));
 CHCheckSize.Text:SetFont(CH_Font, 18);
 CHCheckSize.Text:SetJustifyH("RIGHT");
 
-local CHslider = CreateFrame("Slider", "CHslider", CHOptions, "OptionsSliderTemplate");
-CHslider:SetPoint("TOPLEFT", CHCheckSize, "BOTTOMLEFT", 180, -30);
-CHslider:SetMinMaxValues(10, 25);
-CHslider.minValue, CHslider.maxValue = CHslider:GetMinMaxValues();
-CHslider.Low:SetText(CHslider.minValue);
-CHslider.High:SetText(CHslider.maxValue);
-getglobal(CHslider:GetName() .. 'Text'):SetText(AS_UTF8reverse(CH_Interface.font_size));
-getglobal(CHslider:GetName() .. 'Text'):SetFont(CH_Font, 16);
-getglobal(CHslider:GetName() .. 'Text'):SetJustifyH("RIGHT");
-CHslider:SetValue(tonumber(CH_PM["fontsize"]));
-CHslider:SetValueStep(1);
-CHslider:SetScript("OnValueChanged", function(self,event,arg1) 
+local CHslider1 = CreateFrame("Slider", "CHslider1", CHOptions, "OptionsSliderTemplate");
+CHslider1:SetPoint("TOPRIGHT", CHCheckSize.CheckBox, "BOTTOMRIGHT", 0, -30);
+CHslider1:SetMinMaxValues(10, 25);
+CHslider1.minValue, CHslider1.maxValue = CHslider1:GetMinMaxValues();
+CHslider1.Low:SetText(CHslider1.minValue);
+CHslider1.High:SetText(CHslider1.maxValue);
+getglobal(CHslider1:GetName() .. 'Text'):SetText(AS_UTF8reverse(CH_Interface.font_size));
+getglobal(CHslider1:GetName() .. 'Text'):SetFont(CH_Font, 16);
+getglobal(CHslider1:GetName() .. 'Text'):SetJustifyH("RIGHT");
+CHslider1:SetValue(tonumber(CH_PM["fontsize"]));
+CHslider1:SetValueStep(1);
+CHslider1:SetScript("OnValueChanged", function(self,event,arg1) 
                                       CH_PM["fontsize"]=string.format("%d",event); 
-                                      CHsliderVal:SetText(CH_PM["fontsize"]);
+                                      CHslider1Val:SetText(CH_PM["fontsize"]);
 									           CHOpis1:SetFont(CH_Font, event);
                                       end);
-CHsliderVal = CHOptions:CreateFontString(nil, "ARTWORK");
-CHsliderVal:SetFontObject(GameFontNormal);
-CHsliderVal:SetJustifyH("CENTER");
-CHsliderVal:SetJustifyV("TOP");
-CHsliderVal:ClearAllPoints();
-CHsliderVal:SetPoint("CENTER", CHslider, "CENTER", 0, -12);
-CHsliderVal:SetText(CH_PM["fontsize"]);   
-CHsliderVal:SetFont(CH_Font, 16);
+CHslider1Val = CHOptions:CreateFontString(nil, "ARTWORK");
+CHslider1Val:SetFontObject(GameFontNormal);
+CHslider1Val:SetJustifyH("CENTER");
+CHslider1Val:SetJustifyV("TOP");
+CHslider1Val:ClearAllPoints();
+CHslider1Val:SetPoint("CENTER", CHslider1, "CENTER", 0, -12);
+CHslider1Val:SetText(CH_PM["fontsize"]);   
+CHslider1Val:SetFont(CH_Font, 16);
 
 CHOpis1 = CHOptions:CreateFontString(nil, "ARTWORK");
 CHOpis1:SetFontObject(GameFontNormalLarge);
 CHOpis1:SetJustifyH("LEFT");
 CHOpis1:SetJustifyV("TOP");
 CHOpis1:ClearAllPoints();
-CHOpis1:SetPoint("TOPLEFT", CHslider, "BOTTOMLEFT", -260, 30);
+CHOpis1:SetPoint("TOPLEFT", CHslider1, "BOTTOMLEFT", -260, 30);
 local fontsize = tonumber(CH_PM["fontsize"]);
 if (CH_PM["setsize"]=="1") then
    CHOpis1:SetFont(CH_Font, fontsize);
@@ -778,6 +796,55 @@ else
 end
 CHOpis1:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
 CHOpis1:SetJustifyH("RIGHT");
+
+
+local CHWarningSize = CreateFrame("CheckButton", "CHWarningSize", CHOptions, "SettingsCheckBoxControlTemplate");
+CHWarningSize.CheckBox:SetScript("OnClick", function(self) if (CH_PM["setsizeW"]=="1") then CH_PM["setsizeW"]="0" else CH_PM["setsizeW"]="1" end; end);
+CHWarningSize.CheckBox:SetPoint("TOPLEFT", CHOptionsMode, "BOTTOMRIGHT", -25, -140);
+CHWarningSize:SetPoint("TOPLEFT", CHOptionsMode, "BOTTOMRIGHT", -440, -142);
+CHWarningSize.Text:SetText(AS_UTF8reverse(CH_Interface.font_activ2));   
+CHWarningSize.Text:SetFont(CH_Font, 18);
+CHWarningSize.Text:SetJustifyH("RIGHT");
+
+local CHslider2 = CreateFrame("Slider", "CHslider2", CHOptions, "OptionsSliderTemplate");
+CHslider2:SetPoint("TOPRIGHT", CHWarningSize.CheckBox, "BOTTOMRIGHT", 0, -30);
+CHslider2:SetMinMaxValues(10, 25);
+CHslider2.minValue, CHslider2.maxValue = CHslider2:GetMinMaxValues();
+CHslider2.Low:SetText(CHslider2.minValue);
+CHslider2.High:SetText(CHslider2.maxValue);
+getglobal(CHslider2:GetName() .. 'Text'):SetText(AS_UTF8reverse(CH_Interface.font_size));
+getglobal(CHslider2:GetName() .. 'Text'):SetFont(CH_Font, 16);
+getglobal(CHslider2:GetName() .. 'Text'):SetJustifyH("RIGHT");
+CHslider2:SetValue(tonumber(CH_PM["fontsize"]));
+CHslider2:SetValueStep(1);
+CHslider2:SetScript("OnValueChanged", function(self,event,arg1) 
+                                      CH_PM["fontsizeW"]=string.format("%d",event); 
+                                      CHslider2Val:SetText(CH_PM["fontsizeW"]);
+									           CHOpis2:SetFont(CH_Font, event);
+                                      end);
+CHslider2Val = CHOptions:CreateFontString(nil, "ARTWORK");
+CHslider2Val:SetFontObject(GameFontNormal);
+CHslider2Val:SetJustifyH("CENTER");
+CHslider2Val:SetJustifyV("TOP");
+CHslider2Val:ClearAllPoints();
+CHslider2Val:SetPoint("CENTER", CHslider2, "CENTER", 0, -12);
+CHslider2Val:SetText(CH_PM["fontsize"]);   
+CHslider2Val:SetFont(CH_Font, 16);
+
+CHOpis2 = CHOptions:CreateFontString(nil, "ARTWORK");
+CHOpis2:SetFontObject(GameFontNormalLarge);
+CHOpis2:SetJustifyH("LEFT");
+CHOpis2:SetJustifyV("TOP");
+CHOpis2:ClearAllPoints();
+CHOpis2:SetPoint("TOPLEFT", CHslider2, "BOTTOMLEFT", -260, 30);
+fontsize = tonumber(CH_PM["fontsizeW"]);
+if (CH_PM["setsizeW"]=="1") then
+   CHOpis1:SetFont(CH_Font, fontsize);
+else
+   CHOpis1:SetFont(CH_Font, 18);
+end
+CHOpis2:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
+CHOpis2:SetJustifyH("RIGHT");
 
 
 local CHText0 = CHOptions:CreateFontString(nil, "ARTWORK");
@@ -1014,12 +1081,12 @@ end
 -- the function appends spaces to the left of the given text so that the text is aligned to the right
 function CH_AddSpaces(txt, snd)                                 -- snd = second or next line (interspace 2 on right)
    local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME:GetFont();     -- read current font, size and flag of the chat object
-   local chars_limitC = 150;    -- so much max. characters can fit on one line
+   local chars_limitC = 300;    -- so much max. characters can fit on one line
    
    if (CH_TestLine == nil) then     -- a own frame for displaying the translation of texts and determining the length
       CH_CreateTestLine();
    end   
-   CH_TestLine:SetWidth(DEFAULT_CHAT_FRAME:GetWidth()+50);
+   CH_TestLine:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
    CH_TestLine:Hide();     -- the frame is invisible in the game
    CH_TestLine.text:SetFont(_fontC, _sizeC, _C);
    local count = 0;
