@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.00) 2023.02.20
+﻿-- Addon: WoWinArabic-Chat (version: 10.01) 2023.02.22
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
@@ -19,6 +19,7 @@ local limit_chars2 = 60;    -- max. number of 2 line on bubble (two-lines bubble
 local CH_key_ctrl = false;
 local CH_key_shift = false;
 local CH_key_alt = false;
+local CH_highlight_text = false;
 
 -- fonty z arabskimi znakami
 local CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\calibri.ttf";
@@ -98,6 +99,16 @@ end
 
 -------------------------------------------------------------------------------------------------------
 
+local function CH_Hex2Char(txt)
+   local ret = txt;
+   if (strlen(ret) < 2) then
+      ret = "0" .. ret;
+   end
+   return ret;
+end
+
+-------------------------------------------------------------------------------------------------------
+
 local function CH_Check_Arabic_Letters(txt)
    local result = false;
    if (txt) then
@@ -109,7 +120,7 @@ local function CH_Check_Arabic_Letters(txt)
          charbytes0 = AS_UTF8charbytes(txt, pos);         -- count of bytes (liczba bajtów znaku)
          char0 = strsub(txt, pos, pos + charbytes0 - 1);  -- current character
 			pos = pos + charbytes0;
-         if (char0 >= "؀") then      -- it is a arabic letter
+         if (char0 >= "؀") then      -- it is an arabic letter
             result = true;
             break;
          end
@@ -124,27 +135,45 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
    local colorText = "";
    local colorR, colorG, colorB;
    if (event == "CHAT_MSG_SAY") then
-      colorR =  string.format("%x",ChatTypeInfo.SAY.r * 255);
-      colorG =  string.format("%x",ChatTypeInfo.SAY.g * 255);
-      colorB =  string.format("%x",ChatTypeInfo.SAY.b * 255);
-      colorText = "|cFF"..colorR..colorG..colorB;
-   elseif (event == "CHAT_MSG_PARTY") then
-      colorR =  string.format("%x",ChatTypeInfo.PARTY.r * 255);
-      colorG =  string.format("%x",ChatTypeInfo.PARTY.g * 255);
-      colorB =  string.format("%x",ChatTypeInfo.PARTY.b * 255);
+      colorR =  CH_Hex2Char(string.format("%x",ChatTypeInfo.SAY.r * 255));
+      colorG =  CH_Hex2Char(string.format("%x",ChatTypeInfo.SAY.g * 255));
+      colorB =  CH_Hex2Char(string.format("%x",ChatTypeInfo.SAY.b * 255));
       colorText = "|cFF"..colorR..colorG..colorB;
    elseif (event == "CHAT_MSG_YELL") then
-      colorR =  string.format("%x",ChatTypeInfo.YELL.r * 255);
-      colorG =  string.format("%x",ChatTypeInfo.YELL.g * 255);
-      colorB =  string.format("%x",ChatTypeInfo.YELL.b * 255);
+      colorR =  CH_Hex2Char(string.format("%x",ChatTypeInfo.YELL.r * 255));
+      colorG =  CH_Hex2Char(string.format("%x",ChatTypeInfo.YELL.g * 255));
+      colorB =  CH_Hex2Char(string.format("%x",ChatTypeInfo.YELL.b * 255));
       colorText = "|cFF"..colorR..colorG..colorB;
-   elseif (event == "CHAT_MSG_WHISPER") then
-      colorR =  string.format("%x",ChatTypeInfo.WHISPER.r * 255);
-      colorG =  string.format("%x",ChatTypeInfo.WHISPER.g * 255);
-      colorB =  string.format("%x",ChatTypeInfo.WHISPER.b * 255);
+   elseif ((event == "CHAT_MSG_WHISPER") or (event == "CHAT_MSG_WHISPER_INFORM")) then
+      colorR =  CH_Hex2Char(string.format("%x",ChatTypeInfo.WHISPER.r * 255));
+      colorG =  CH_Hex2Char(string.format("%x",ChatTypeInfo.WHISPER.g * 255));
+      colorB =  CH_Hex2Char(string.format("%x",ChatTypeInfo.WHISPER.b * 255));
+      colorText = "|cFF"..colorR..colorG..colorB;
+   elseif ((event == "CHAT_MSG_PARTY") or (event == "CHAT_MSG_PARTY_LEADER")) then
+      colorR =  CH_Hex2Char(string.format("%x",ChatTypeInfo.PARTY.r * 255));
+      colorG =  CH_Hex2Char(string.format("%x",ChatTypeInfo.PARTY.g * 255));
+      colorB =  CH_Hex2Char(string.format("%x",ChatTypeInfo.PARTY.b * 255));
+      colorText = "|cFF"..colorR..colorG..colorB;
+   elseif (event == "CHAT_MSG_RAID") then
+      colorR =  CH_Hex2Char(string.format("%x",ChatTypeInfo.RAID.r * 255));
+      colorG =  CH_Hex2Char(string.format("%x",ChatTypeInfo.RAID.g * 255));
+      colorB =  CH_Hex2Char(string.format("%x",ChatTypeInfo.RAID.b * 255));
+      colorText = "|cFF"..colorR..colorG..colorB;
+   elseif (event == "CHAT_MSG_RAID_LEADER") then
+      colorText = "|cFFFF0000";        -- red color
+   elseif (event == "CHAT_MSG_RAID_WARNING") then
+      colorText = "|cFFFF0000";        -- red color
+   elseif ((event == "CHAT_MSG_GUILD") or (event == "CHAT_MSG_OFFICER")) then
+      colorR =  CH_Hex2Char(string.format("%x",ChatTypeInfo.GUILD.r * 255));
+      colorG =  CH_Hex2Char(string.format("%x",ChatTypeInfo.GUILD.g * 255));
+      colorB =  CH_Hex2Char(string.format("%x",ChatTypeInfo.GUILD.b * 255));
+      colorText = "|cFF"..colorR..colorG..colorB;
+   elseif ((event == "CHAT_MSG_BATTLEGROUND") or (event == "CHAT_MSG_BATTLEGROUND_LEADER")) then
+      colorR =  CH_Hex2Char(string.format("%x",ChatTypeInfo.BATTLEGROUND.r * 255));
+      colorG =  CH_Hex2Char(string.format("%x",ChatTypeInfo.BATTLEGROUND.g * 255));
+      colorB =  CH_Hex2Char(string.format("%x",ChatTypeInfo.BATTLEGROUND.b * 255));
       colorText = "|cFF"..colorR..colorG..colorB;
    end
---print(event)      
 
    local is_arabic = CH_Check_Arabic_Letters(arg1);
    if (is_arabic) then
@@ -166,11 +195,16 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          local czystyArg = CH_Usun_Linki(arg1);
          tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
          CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
-      elseif (event == "CHAT_MSG_WHISPER") then
+      elseif (event == "CHAT_MSG_WHISPER") then          -- otrzymany szept od innego gracza
          if (self:GetName() == "ChatFrame1") then        -- jest komunikat WHISPER w głównym oknie czatu
-            return true;         -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
+            return true;                      -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
          end
          output = arg1..AS_UTF8reverse(" همس: ")..playerLink;     -- whisped
+      elseif (event == "CHAT_MSG_WHISPER_INFORM") then   -- wysyłany szept do innego gracza
+         if (self:GetName() == "ChatFrame1") then        -- jest komunikat WHISPER w głównym oknie czatu
+            return true;                      -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
+         end
+         output = arg1.." :"..playerLink.." "..AS_UTF8reverse("إلى");    
       elseif ((event == "CHAT_MSG_PARTY") or (event == "CHAT_MSG_PARTY_LEADER")) then
          if (event == "CHAT_MSG_PARTY_LEADER") then
             output = arg1.." :"..playerLink.." [Party Leader]";
@@ -180,6 +214,19 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          local czystyArg = CH_Usun_Linki(arg1);
          tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
          CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
+      elseif (event == "CHAT_MSG_RAID") then
+         output = arg1.." :"..playerLink.." [Raid]";
+      elseif (event == "CHAT_MSG_RAID_LEADER") then
+         output = arg1.." :"..playerLink.." [Raid Leader]";
+      elseif (event == "CHAT_MSG_RAID_WARNING") then
+         local _font1, _size1, _3 = RaidWarningFrameSlot1:GetFont(); -- odczytaj aktualną czcionkę i rozmiar
+         RaidWarningFrameSlot1:SetFont(CH_Font, _size1);
+         RaidWarningFrameSlot2:SetFont(CH_Font, _size1);
+         output = arg1.." :"..playerLink.." [Raid Warning]";
+      elseif ((event == "CHAT_MSG_GUILD") or (event == "CHAT_MSG_OFFICER")) then
+         output = arg1.." :"..playerLink.." [Guild]";
+      elseif ((event == "CHAT_MSG_BATTLEGROUND") or (event == "CHAT_MSG_BATTLEGROUND_LEADER")) then
+         output = arg1.." :"..playerLink;
       else
          return false;  -- wyświetlaj tekst oryginalny w oknie czatu
       end   
@@ -346,6 +393,14 @@ end
 
 local function CH_OnChar(self, character)    -- wprowadzono znak litery z klawiatury
    if (CH_ToggleButton:IsEnabled()) then
+      if (CH_highlight_text) then            -- mamy podświetlony tekst i wciśnięto cyfrę lub literę
+         self:SetText(character);            -- wyzeruj pole edycji i wprowadź character
+         self:SetCursorPosition(0);
+         CH_BuforEditBox= {};
+         CH_BuforLength = 0;
+         CH_BuforCursor = 0;
+         CH_highlight_text = false;
+      end
       CH_BuforLength = CH_BuforLength + 1;      -- bufor powiększył się o 1 element
       if (CH_BuforLength == 1) then             -- pierwsza litera w edytorze
          tinsert(CH_BuforEditBox, 1, character);
@@ -370,7 +425,9 @@ local function CH_OnChar(self, character)    -- wprowadzono znak litery z klawia
             end
             tinsert(CH_BuforEditBox, CH_BuforCursor, character);
          else                                   -- tu jest tryb przesuwania w prawo (litera łacińska)
-            CH_BuforCursor = CH_BuforCursor + 1;   -- aktualna pozycja kursora
+            if (CH_BuforCursor < CH_BuforLength) then
+               CH_BuforCursor = CH_BuforCursor + 1;   -- aktualna pozycja kursora
+            end
             tinsert(CH_BuforEditBox, CH_BuforCursor, character);
          end
          local spaces = "( )?؟!,.;:،";             -- letters that we treat as a space
@@ -546,6 +603,9 @@ local function CH_OnKeyUp(self, key)      -- puszczono klawisz key: sprawdź czy
          end
          return;
       end
+      if (CH_key_ctrl and (key == "A") and (strlen(self:GetText())>0)) then  -- wciśnięto klawisza Ctrl+A: zaznaczono tekst w editBox
+         CH_highlight_text = true;
+      end
       if (CH_ED_mode == 1) then        -- mamy tryb arabski
          if (key == "HOME") then       -- skocz kursorem na początek tekstu, czyli na skrajne prawo
             self:SetCursorPosition(strlen(self:GetText()));
@@ -638,10 +698,16 @@ local function CH_OnEvent(self, event, name, ...)
       ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", CH_ChatFilter);
       ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL", CH_ChatFilter);
       ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER_INFORM", CH_ChatFilter);
       ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY", CH_ChatFilter);
       ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY_LEADER", CH_ChatFilter);
-      ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD", CH_ChatFilter);
       ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID_LEADER", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID_WARNING", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_OFFICER", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_BATTLEGROUND", CH_ChatFilter);
+      ChatFrame_AddMessageEventFilter("CHAT_MSG_BATTLEGROUND_LEADER", CH_ChatFilter);
       DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat ver. "..CH_version.." - started");
       CH_Frame.ADDON_LOADED = nil;
    end
@@ -714,29 +780,31 @@ function CH_LineChat(txt, font_size)
 
 			newstr = char1 .. newstr;        -- sprawdzamy znaki od ostatnich
          
-         if ((char1..char2 == "|r") and (pos < bytes-70)) then           -- start of the link
+         if ((char1..char2 == "|r") and (pos < bytes)) then          -- start of the link
             link_start_stop = true;
-         elseif ((char1..char2 == "|c") and (pos < bytes-70)) then       -- end of the link
+         elseif ((char1..char2 == "|c") and (pos < bytes)) then      -- end of the link
             link_start_stop = false;
          end
          
-         if ((char1 == " ") and (link_start_stop == false)) then     -- mamy spację, ale nie wewnątrz linku
+         if ((char1 == " ") and (link_start_stop == false)) then     -- mamy spację, nie wewnątrz linku
             last_space = 0;
             nextstr = "";
          else
             nextstr = char1 .. nextstr;
             last_space = last_space + 1;
          end
-         CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
-         CH_TestLine.text:SetText(newstr);
-         if ((CH_TestLine.text:GetHeight() > font_size*1.5) and (link_start_stop == false)) then   -- tekst nie mieści się już w 1 linii
-            newstr = AS_UTF8sub(newstr, last_space+1);   -- tekst od ostatniej spacji
-            newstrR = CH_AddSpaces(newstr, second);
-            retstr = retstr .. newstrR .. "\n";
-            newstr = nextstr;
-            nextstr = "";
-            counter = 0;
-            second = 3;  
+         if (link_start_stop == false) then           -- nie jesteśmy wewnątrz linku - można sprawdzać
+            CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
+            CH_TestLine.text:SetText(newstr);
+            if (CH_TestLine.text:GetHeight() > font_size*1.5) then   -- tekst nie mieści się już w 1 linii
+               newstr = AS_UTF8sub(newstr, last_space+1);            -- tekst od ostatniej spacji
+               newstrR = CH_AddSpaces(newstr, second);
+               retstr = retstr .. newstrR .. "\n";
+               newstr = nextstr;
+               nextstr = "";
+               counter = 0;
+               second = 3;  
+            end
          end
          char2 = char1;    -- zapamiętaj znak, potrzebne w następnej pętli
          pos = pos - 1;
@@ -892,21 +960,21 @@ CH_Frame:SetScript("OnEvent", CH_OnEvent);
 -------------------------------------------------------------------------------------------------------
 
 CH_IsolatedLetter = {
-   ["form"] = "isolated",
+   ["form"] = "isolated",  -- form letters are in UTF-8 code > U+FE80,  isolated letters are in UTF-8 code < U+0650
    
-   ["ﺎ"] = "ا",  -- ALEF: middle & final form
-   ["ﺂ"] = "ﺁ",  -- ALEF WITH MADA ABOVE: middle & final form
-   ["ﺄ"] = "أ",  -- ALEF WITH HAMZA ABOVE: middle & final form
-   ["ﺈ"] = "إ",  -- ALEF WITH HAMZA BELOW: middle & final form
-   ["ﺑ"] = "ب",  ["ﺒ"] = "ب",  ["ﺐ"] = "ب",  -- BA: initial, middle, final form
+   ["ﺍ"] = "ا",  ["ﺎ"] = "ا",  -- ALEF: isolated & initial, middle & final form
+   ["ﺁ"] = "آ",  ["ﺂ"] = "آ",  -- ALEF WITH MADA ABOVE:  isolated & initial, middle & final form
+   ["ﺃ"] = "أ",  ["ﺄ"] = "أ",  -- ALEF WITH HAMZA ABOVE: isolated & initial, middle & final form
+   ["ﺇ"] = "إ",  ["ﺈ"] = "إ",  -- ALEF WITH HAMZA BELOW: isolated & initial, middle & final form
+   ["ﺑ"] = "ب",  ["ﺒ"] = "ب",  ["ﺐ"] = "ب",  -- BA:  initial, middle, final form
    ["ﺗ"] = "ت",  ["ﺜ"] = "ت",  ["ﺚ"] = "ت",  -- THA: initial, middle, final form
    ["ﺟ"] = "ج",  ["ﺠ"] = "ج",  ["ﺞ"] = "ج",  -- JIM: initial, middle, final form
    ["ﺣ"] = "ح",  ["ﺤ"] = "ح",  ["ﺢ"] = "ح",  -- HAH: initial, middle, final form
-   ["ﺧ"] = "خ",  ["ﺨ"] = "خ",  ["ﺦ"] = "خ",  -- KHAH: initial, middle, final form
-   ["ﺪ"] = "د",  -- DAL: middle & final form
-   ["ﺬ"] = "ذ",  -- DHAL: middle & final form
-   ["ﺮ"] = "ر",  -- RA: middle & final form
-   ["ﺰ"] = "ز",  -- ZAIN: middle & final form
+   ["ﺧ"] = "خ",  ["ﺨ"] = "خ",  ["ﺦ"] = "خ",  -- KHAH:initial, middle, final form
+   ["ﺩ"] = "د",  ["ﺪ"] = "د",  -- DAL:  isolated & initial, middle & final form
+   ["ﺫ"] = "ذ",  ["ﺬ"] = "ذ",  -- DHAL: isolated & initial, middle & final form
+   ["ﺭ"] = "ر",  ["ﺮ"] = "ر",  -- RA:   isolated & initial, middle & final form
+   ["ﺯ"] = "ز",  ["ﺰ"] = "ز",  -- ZAIN: isolated & initial, middle & final form
    ["ﺳ"] = "س",  ["ﺴ"] = "س",  ["ﺲ"] = "س",  -- SIN: initial, middle, final form
    ["ﺷ"] = "ش",  ["ﺸ"] = "ش",  ["ﺶ"] = "ش",  -- SHIN: initial, middle, final form
    ["ﺻ"] = "ص",  ["ﺼ"] = "ص",  ["ﺺ"] = "ص",  -- SAD: initial, middle, final form
@@ -922,16 +990,16 @@ CH_IsolatedLetter = {
    ["ﻣ"] = "م",  ["ﻤ"] = "م",  ["ﻢ"] = "م",  -- MIM: initial, middle, final form
    ["ﻧ"] = "ن",  ["ﻨ"] = "ن",  ["ﻦ"] = "ن",  -- NUN: initial, middle, final form
    ["ﻳ"] = "ي",  ["ﻴ"] = "ي",  ["ﻲ"] = "ي",  -- YA: initial, middle, final form
-   ["ﺋ"] = "ئ",  ["ﺌ"] = "ئ",  ["ﺊ"] = "ئ",  -- YEH WITH HAMZA ABOVE: initial, middle, final form
-   ["ﻰ"] = "ى",  -- ALEF MAKSURA: final form
-   ["ﻮ"] = "و",  -- WAW: middle & final form
-   ["ﺆ"] = "ؤ",  -- WAW WITH HAMZA ABOVE: initial, middle, final form
+   ["ﺉ"] = "ئ",  ["ﺋ"] = "ئ",  ["ﺌ"] = "ئ",  ["ﺊ"] = "ئ",  -- YEH WITH HAMZA ABOVE: isolated, initial, middle, final form
+   ["ﻯ"] = "ى",  ["ﻰ"] = "ى",  -- ALEF MAKSURA: isolated & initial & middle, final form
+   ["ﻭ"] = "و",  ["ﻮ"] = "و",  -- WAW: isolated & initial, middle & final form
+   ["ﺅ"] = "ؤ",  ["ﺆ"] = "ؤ",  -- WAW WITH HAMZA ABOVE: isolated & initial, middle & final form
    ["ﻩ"] = "ه",  ["ﻫ"] = "ه", ["ﻬ"] = "ه", ["ﻪ"] = "ه",  -- HAH: isolated, initial, middle, final form
-   ["ﺔ"] = "ة",  -- TAH: final form
+   ["ﺓ"] = "ة",  ["ﺔ"] = "ة",  -- TAH: isolated & initial & middle, final form
    ["ﻼ"] = "ﻻ",  -- LAM WITH ALEF: middle & final form
    ["ﻶ"] = "ﻵ",  -- LAM WITH ALEF WITH MADDA: middle & final form
-   ["ﻷ"] = "لأ",  ["ﻸ"] = "لأ",  -- LAM WITH ALEF WITH HAMZA ABOVE: isolated & initial, middle & final form
-   ["ﻹ"] = "لإ",  ["ﻺ"] = "لإ",  -- LAM WITH ALEF WITH HAMZA BELOW: isolated & initial, middle & final form
+   ["ﻸ"] = "لأ",  -- LAM WITH ALEF WITH HAMZA ABOVE: middle & final form
+   ["ﻺ"] = "لإ",  -- LAM WITH ALEF WITH HAMZA BELOW: middle & final form
    ["ﺀ"] = "ء",  -- HAMZA: initial & middle & final form
 
    ["ﻻ"] = "ل".."ا",  ["ﻼ"] = "ل".."ا",  -- Arabic ligature LAM with ALEF: isolated & initial, middle & final form
