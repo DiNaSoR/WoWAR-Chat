@@ -25,6 +25,14 @@ local CH_BSize = 18;            -- default size of chat bubbles
 -- fonty z arabskimi znakami
 local CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\calibri.ttf";
 
+-- user interface in addon options
+local CH_Interface = {   
+   started     = "started",      -- started 
+   active      = "قم بتفعيل الإضافة",   -- Activate the addon 
+   settings    = "خيارات إضافية",      -- Addon settings 
+   font_activ  = "تفعيل وظيفة تغيير حجم الخط في الفقاعات",  -- activate the function of changing the font size in the bubbles 
+   font_size   = "حجم الخط",    -- font size 
+   }; 
 
 -------------------------------------------------------------------------------------------------------
 
@@ -39,7 +47,11 @@ local function CH_bubblizeText()
             -- This is hopefully the frame with the content
                for i = 1, child:GetNumRegions() do
                   local region = select(i, child:GetRegions());
-                  act_font = CH_BSize;
+                  if (CH_PM["setsize"]=="1") then
+                     act_font = tonumber(CH_PM["fontsize"]);
+                  else
+                     act_font = CH_BSize;
+                  end
                   for idx, iArray in ipairs(CH_BubblesArray) do      -- sprawdź, czy dane są właściwe (tekst oryg. się zgadza z zapisaną w tablicy)
                      if (region and not region:GetName() and region:IsVisible() and region.GetText and (region:GetText() == iArray[1])) then
                         local newText = iArray[2];   -- text received
@@ -653,6 +665,179 @@ end
 
 -------------------------------------------------------------------------------------------------------
 
+local function CH_CheckVars()
+  if (not CH_PM) then
+     CH_PM = {};
+  end
+  -- initialize check options
+  if (not CH_PM["active"] ) then    -- dodatek aktywny
+     CH_PM["active"] = "1";   
+  end
+  if (not CH_PM["setsize"] ) then   -- uaktywnij zmiany wielkości czcionki
+     CH_PM["setsize"] = "0";   
+  end
+  if (not CH_PM["fontsize"] ) then  -- wielkość czcionki
+     CH_PM["fontsize"] = "20";
+  end
+end
+  
+-------------------------------------------------------------------------------------------------------
+
+local function CH_SetCheckButtonState()
+  CHCheckButton1:SetValue(CH_PM["active"]=="1");
+  CHCheckSize:SetValue(CH_PM["setsize"]=="1");
+  local fontsize = tonumber(CH_PM["fontsize"]);
+  CHslider:SetValue(fontsize);
+  if (CH_PM["setsize"]=="1") then
+     CHOpis1:SetFont(CH_Font, fontsize);
+  else   
+     CHOpis1:SetFont(CH_Font, 20);
+  end
+end
+
+-------------------------------------------------------------------------------------------------------
+
+local function CH_BlizzardOptions()
+
+-- Create main frame for information text
+local CHOptions = CreateFrame("FRAME", "WoWinArabicChatOptions");
+CHOptions.refresh = function (self) CH_SetCheckButtonState() end;
+CHOptions.name = "WoWinArabic-Chat";
+InterfaceOptions_AddCategory(CHOptions);
+
+local CHOptionsHeader = CHOptions:CreateFontString(nil, "ARTWORK");
+CHOptionsHeader:SetFontObject(GameFontNormalLarge);
+CHOptionsHeader:SetJustifyH("LEFT"); 
+CHOptionsHeader:SetJustifyV("TOP");
+CHOptionsHeader:ClearAllPoints();
+CHOptionsHeader:SetPoint("TOPLEFT", 180, -16);
+CHOptionsHeader:SetText("2023 ﺔﻨﺴﻟ Platine ﺭﻮﻄﻤﻟﺍ "..CH_version.." ﺔﺨﺴﻧ WoWinArabic-Chat ﺔﻓﺎﺿﺇ");
+CHOptionsHeader:SetFont(CH_Font, 16);
+
+local CHCheckButton1 = CreateFrame("CheckButton", "CHCheckButton1", CHOptions, "SettingsCheckBoxControlTemplate");
+CHCheckButton1.CheckBox:SetScript("OnClick", function(self) if (CH_PM["active"]=="1") then CH_PM["active"]="0" else CH_PM["active"]="1" end; end);
+CHCheckButton1.CheckBox:SetPoint("TOPLEFT", CHOptionsHeader, "BOTTOMLEFT", 390, -30);    -- pozycja przycisku CheckBox
+CHCheckButton1:SetPoint("TOPRIGHT", CHOptionsHeader, "BOTTOMRIGHT", 125, -32);     -- pozycja opisu przycisku CheckBox
+CHCheckButton1.Text:SetText(AS_UTF8reverse(CH_Interface.active));     -- dodatek aktywny
+CHCheckButton1.Text:SetFont(CH_Font, 18);
+CHCheckButton1.Text:SetJustifyH("RIGHT");
+
+local CHOptionsMode = CHOptions:CreateFontString(nil, "ARTWORK");
+CHOptionsMode:SetFontObject(GameFontWhite);
+CHOptionsMode:SetJustifyH("RIGHT");
+CHOptionsMode:SetJustifyV("TOP");
+CHOptionsMode:ClearAllPoints();
+CHOptionsMode:SetPoint("TOPRIGHT", CHOptionsHeader, "BOTTOMRIGHT", -35, -95);
+CHOptionsMode:SetFont(CH_Font, 18);
+CHOptionsMode:SetText(":"..AS_UTF8reverse(CH_Interface.settings));          -- Ustawienia dodatku
+
+local CHCheckSize = CreateFrame("CheckButton", "CHCheckSize", CHOptions, "SettingsCheckBoxControlTemplate");
+CHCheckSize.CheckBox:SetScript("OnClick", function(self) if (CH_PM["setsize"]=="1") then CH_PM["setsize"]="0" else CH_PM["setsize"]="1" end; end);
+CHCheckSize.CheckBox:SetPoint("TOPLEFT", CHOptionsMode, "BOTTOMRIGHT", -25, -20);
+CHCheckSize:SetPoint("TOPLEFT", CHOptionsMode, "BOTTOMRIGHT", -323, -22);
+CHCheckSize.Text:SetText(AS_UTF8reverse(CH_Interface.font_activ));   
+CHCheckSize.Text:SetFont(CH_Font, 18);
+CHCheckSize.Text:SetJustifyH("RIGHT");
+
+local CHslider = CreateFrame("Slider", "CHslider", CHOptions, "OptionsSliderTemplate");
+CHslider:SetPoint("TOPLEFT", CHCheckSize, "BOTTOMLEFT", 180, -30);
+CHslider:SetMinMaxValues(10, 25);
+CHslider.minValue, CHslider.maxValue = CHslider:GetMinMaxValues();
+CHslider.Low:SetText(CHslider.minValue);
+CHslider.High:SetText(CHslider.maxValue);
+getglobal(CHslider:GetName() .. 'Text'):SetText(AS_UTF8reverse(CH_Interface.font_size));
+getglobal(CHslider:GetName() .. 'Text'):SetFont(CH_Font, 16);
+getglobal(CHslider:GetName() .. 'Text'):SetJustifyH("RIGHT");
+CHslider:SetValue(tonumber(CH_PM["fontsize"]));
+CHslider:SetValueStep(1);
+CHslider:SetScript("OnValueChanged", function(self,event,arg1) 
+                                      CH_PM["fontsize"]=string.format("%d",event); 
+                                      CHsliderVal:SetText(CH_PM["fontsize"]);
+									           CHOpis1:SetFont(CH_Font, event);
+                                      end);
+CHsliderVal = CHOptions:CreateFontString(nil, "ARTWORK");
+CHsliderVal:SetFontObject(GameFontNormal);
+CHsliderVal:SetJustifyH("CENTER");
+CHsliderVal:SetJustifyV("TOP");
+CHsliderVal:ClearAllPoints();
+CHsliderVal:SetPoint("CENTER", CHslider, "CENTER", 0, -12);
+CHsliderVal:SetText(CH_PM["fontsize"]);   
+CHsliderVal:SetFont(CH_Font, 16);
+
+CHOpis1 = CHOptions:CreateFontString(nil, "ARTWORK");
+CHOpis1:SetFontObject(GameFontNormalLarge);
+CHOpis1:SetJustifyH("LEFT");
+CHOpis1:SetJustifyV("TOP");
+CHOpis1:ClearAllPoints();
+CHOpis1:SetPoint("TOPLEFT", CHslider, "BOTTOMLEFT", -260, 30);
+local fontsize = tonumber(CH_PM["fontsize"]);
+if (CH_PM["setsize"]=="1") then
+   CHOpis1:SetFont(CH_Font, fontsize);
+else
+   CHOpis1:SetFont(CH_Font, 18);
+end
+CHOpis1:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
+CHOpis1:SetJustifyH("RIGHT");
+
+
+local CHText0 = CHOptions:CreateFontString(nil, "ARTWORK");
+CHText0:SetFontObject(GameFontWhite);
+CHText0:SetJustifyH("LEFT");
+CHText0:SetJustifyV("TOP");
+CHText0:ClearAllPoints();
+CHText0:SetPoint("BOTTOMLEFT", 16, 90);
+CHText0:SetFont(CH_Font, 13);
+CHText0:SetText("Quick commands from the chat line:");
+
+local CHText7 = CHOptions:CreateFontString(nil, "ARTWORK");
+CHText7:SetFontObject(GameFontWhite);
+CHText7:SetJustifyH("LEFT");
+CHText7:SetJustifyV("TOP");
+CHText7:ClearAllPoints();
+CHText7:SetPoint("TOPLEFT", CHText0, "BOTTOMLEFT", 0, -10);
+CHText7:SetFont(CH_Font, 13);
+CHText7:SetText("/archat   to bring up this addon settings window");
+
+local CHText1 = CHOptions:CreateFontString(nil, "ARTWORK");
+CHText1:SetFontObject(GameFontWhite);
+CHText1:SetJustifyH("LEFT");
+CHText1:SetJustifyV("TOP");
+CHText1:ClearAllPoints();
+CHText1:SetPoint("TOPLEFT", CHText7, "BOTTOMLEFT", 0, -10);
+CHText1:SetFont(CH_Font, 13);
+CHText1:SetText("/archat 1  or  /archat on   to activate the addon");
+
+local CHText2 = CHOptions:CreateFontString(nil, "ARTWORK");
+CHText2:SetFontObject(GameFontWhite);
+CHText2:SetJustifyH("LEFT");
+CHText2:SetJustifyV("TOP");
+CHText2:ClearAllPoints();
+CHText2:SetPoint("TOPLEFT", CHText1, "BOTTOMLEFT", 0, -4);
+CHText2:SetFont(CH_Font, 13);
+CHText2:SetText("/archat 0  or  /archat off   to deactivate the addon");
+
+end
+
+-------------------------------------------------------------------------------------------------------
+
+local function CH_SlashCommand(msg)
+  -- check the command
+  if (msg) then
+     local CH_command = string.lower(msg);                -- normalizacja, tylko małe litery
+     if ((CH_command=="on") or (CH_command=="1")) then    -- włącz przełącznik aktywności
+        CH_PM["active"]="1";
+        DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat is active now");
+     elseif ((CH_command=="off") or (CH_command=="0")) then
+        CH_PM["active"]="0";
+        DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat is inactive now");
+     else
+        Settings.OpenToCategory("WoWinArabic-Chat");
+     end   
+  end
+end
+
+-------------------------------------------------------------------------------------------------------
+
 local function CH_OnEvent(self, event, name, ...)
    if (event=="ADDON_LOADED" and name=="WoWinArabic_Chat") then
       CH_Frame:UnregisterEvent("ADDON_LOADED");
@@ -709,7 +894,13 @@ local function CH_OnEvent(self, event, name, ...)
       ChatFrame_AddMessageEventFilter("CHAT_MSG_OFFICER", CH_ChatFilter);
       ChatFrame_AddMessageEventFilter("CHAT_MSG_BATTLEGROUND", CH_ChatFilter);
       ChatFrame_AddMessageEventFilter("CHAT_MSG_BATTLEGROUND_LEADER", CH_ChatFilter);
-      DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat ver. "..CH_version.." - started");
+      
+      SlashCmdList["WOWINARABIC_CHAT"] = function(msg) CH_SlashCommand(msg); end
+      SLASH_WOWINARABIC_CHAT1 = "/wowinarabic-chat";
+      SLASH_WOWINARABIC_CHAT2 = "/archat";
+      CH_CheckVars();
+      CH_BlizzardOptions();
+      DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat ver. "..CH_version.." - "..CH_Interface.started);
       CH_Frame.ADDON_LOADED = nil;
    end
 end
