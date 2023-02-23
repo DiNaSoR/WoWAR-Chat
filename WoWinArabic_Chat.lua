@@ -234,9 +234,6 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          output = arg1.." :"..playerLink.." [Raid Leader]";
       elseif (event == "CHAT_MSG_RAID_WARNING") then
          local _font1, _size1, _3 = RaidWarningFrameSlot1:GetFont(); -- odczytaj aktualną czcionkę i rozmiar
-         if (CH_PM["setsizeW"] == "1") then    -- mamy włączoną wielkość czcionki do komunikatu Raid Warning
-            _size1 = tonumber(CH_PM["fontsizeW"]);
-         end
          RaidWarningFrameSlot1:SetFont(CH_Font, _size1);
          RaidWarningFrameSlot2:SetFont(CH_Font, _size1);
          output = arg1.." :"..playerLink.." [Raid Warning]";
@@ -693,12 +690,6 @@ local function CH_CheckVars()
   if (not CH_PM["fontsize"] ) then  -- wielkość czcionki
      CH_PM["fontsize"] = "20";
   end
-  if (not CH_PM["setsizeW"] ) then   -- uaktywnij zmiany wielkości czcionki komunikatu Raid Warning
-     CH_PM["setsizeW"] = "0";   
-  end
-  if (not CH_PM["fontsizeW"] ) then  -- wielkość czcionki komunikatu Raid Warning
-     CH_PM["fontsizeW"] = "20";
-  end
 end
   
 -------------------------------------------------------------------------------------------------------
@@ -712,14 +703,6 @@ local function CH_SetCheckButtonState()
      CHOpis1:SetFont(CH_Font, fontsize);
   else   
      CHOpis1:SetFont(CH_Font, 20);
-  end
-  CHWarningSize:SetValue(CH_PM["setsizeW"]=="1");
-  fontsize = tonumber(CH_PM["fontsizeW"]);
-  CHslider2:SetValue(fontsize);
-  if (CH_PM["setsizeW"]=="1") then
-     CHOpis2:SetFont(CH_Font, fontsize);
-  else   
-     CHOpis2:SetFont(CH_Font, 20);
   end
 end
 
@@ -806,55 +789,6 @@ else
 end
 CHOpis1:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
 CHOpis1:SetJustifyH("RIGHT");
-
-
-local CHWarningSize = CreateFrame("CheckButton", "CHWarningSize", CHOptions, "SettingsCheckBoxControlTemplate");
-CHWarningSize.CheckBox:SetScript("OnClick", function(self) if (CH_PM["setsizeW"]=="1") then CH_PM["setsizeW"]="0" else CH_PM["setsizeW"]="1" end; end);
-CHWarningSize.CheckBox:SetPoint("TOPLEFT", CHOptionsMode, "BOTTOMRIGHT", -25, -140);
-CHWarningSize:SetPoint("TOPLEFT", CHOptionsMode, "BOTTOMRIGHT", -440, -142);
-CHWarningSize.Text:SetText(AS_UTF8reverse(CH_Interface.font_activ2));   
-CHWarningSize.Text:SetFont(CH_Font, 18);
-CHWarningSize.Text:SetJustifyH("RIGHT");
-
-local CHslider2 = CreateFrame("Slider", "CHslider2", CHOptions, "OptionsSliderTemplate");
-CHslider2:SetPoint("TOPRIGHT", CHWarningSize.CheckBox, "BOTTOMRIGHT", 0, -30);
-CHslider2:SetMinMaxValues(10, 25);
-CHslider2.minValue, CHslider2.maxValue = CHslider2:GetMinMaxValues();
-CHslider2.Low:SetText(CHslider2.minValue);
-CHslider2.High:SetText(CHslider2.maxValue);
-getglobal(CHslider2:GetName() .. 'Text'):SetText(AS_UTF8reverse(CH_Interface.font_size));
-getglobal(CHslider2:GetName() .. 'Text'):SetFont(CH_Font, 16);
-getglobal(CHslider2:GetName() .. 'Text'):SetJustifyH("RIGHT");
-CHslider2:SetValue(tonumber(CH_PM["fontsize"]));
-CHslider2:SetValueStep(1);
-CHslider2:SetScript("OnValueChanged", function(self,event,arg1) 
-                                      CH_PM["fontsizeW"]=string.format("%d",event); 
-                                      CHslider2Val:SetText(CH_PM["fontsizeW"]);
-									           CHOpis2:SetFont(CH_Font, event);
-                                      end);
-CHslider2Val = CHOptions:CreateFontString(nil, "ARTWORK");
-CHslider2Val:SetFontObject(GameFontNormal);
-CHslider2Val:SetJustifyH("CENTER");
-CHslider2Val:SetJustifyV("TOP");
-CHslider2Val:ClearAllPoints();
-CHslider2Val:SetPoint("CENTER", CHslider2, "CENTER", 0, -12);
-CHslider2Val:SetText(CH_PM["fontsize"]);   
-CHslider2Val:SetFont(CH_Font, 16);
-
-CHOpis2 = CHOptions:CreateFontString(nil, "ARTWORK");
-CHOpis2:SetFontObject(GameFontNormalLarge);
-CHOpis2:SetJustifyH("LEFT");
-CHOpis2:SetJustifyV("TOP");
-CHOpis2:ClearAllPoints();
-CHOpis2:SetPoint("TOPLEFT", CHslider2, "BOTTOMLEFT", -260, 30);
-fontsize = tonumber(CH_PM["fontsizeW"]);
-if (CH_PM["setsizeW"]=="1") then
-   CHOpis1:SetFont(CH_Font, fontsize);
-else
-   CHOpis1:SetFont(CH_Font, 18);
-end
-CHOpis2:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
-CHOpis2:SetJustifyH("RIGHT");
 
 
 local CHText0 = CHOptions:CreateFontString(nil, "ARTWORK");
