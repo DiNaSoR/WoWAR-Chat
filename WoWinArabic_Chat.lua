@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.01) 2023.02.22
+﻿-- Addon: WoWinArabic-Chat (version: 10.01) 2023.02.23
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
@@ -20,7 +20,7 @@ local CH_key_ctrl = false;
 local CH_key_shift = false;
 local CH_key_alt = false;
 local CH_highlight_text = false;
-local CH_BSize = 14;            -- default size of chat bubbles
+local CH_BSize = 18;            -- default size of chat bubbles
 
 -- fonty z arabskimi znakami
 local CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\calibri.ttf";
@@ -267,24 +267,28 @@ local function CH_AR_ON_OFF()       -- funkcja włącz/wyłącza tryb arabski
       CH_ToggleButton2:SetNormalFontObject("GameFontNormal");  -- litery AR żółte
       CH_ToggleButton2:SetText("AR");
       CH_ED_mode = 1;
-      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);         -- przesuń kursor na skrajne lewo
       CH_BuforCursor = 0;
       CH_ED_cursor_move = 1;
       CH_InsertButton:SetText("←");
       CH_InsertButton:Show();
-   else
+   else                             -- mamy tryb arabski - przełącz na tryb angielski
       DEFAULT_CHAT_FRAME.editBox:SetJustifyH("LEFT");
-      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(AS_UTF8len(txt));  -- przesuń kursor na skrajne prawo
       CH_ToggleButton:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
       CH_ToggleButton:SetText("EN");
-      CH_ToggleButton2:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
+      CH_ToggleButton2:SetNormalFontObject("GameFontRed");     -- litery EN czerwone
       CH_ToggleButton2:SetText("EN");
       CH_ED_mode = 0;
-      DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(strlen(txt));      -- przesuń kursor na skrajne prawo
-      CH_BuforCursor = CH_BuforLength;
-      CH_ED_cursor_move = 0;
-      CH_InsertButton:SetText("→");
-      CH_InsertButton:Hide();
+      if ((CH_BuforLength > 0) and (CH_BuforEditBox[CH_BuforLength] >= "؀")) then   -- pierwszym znakiem z prawej strony jest litera arabska
+         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(0);      -- przesuń kursor na skrajne lewo
+         CH_BuforCursor = 0;
+         CH_ED_cursor_move = 1;
+      else
+         DEFAULT_CHAT_FRAME.editBox:SetCursorPosition(strlen(txt));      -- przesuń kursor na skrajne prawo
+         CH_BuforCursor = CH_BuforLength;
+         CH_ED_cursor_move = 0;
+         CH_InsertButton:SetText("→");
+         CH_InsertButton:Hide();
+      end
    end
    if (strlen(txt) == 0) then    -- przy komendzie /w Player trzeba wyzerować tę komendę
       CH_BuforEditBox = {};
@@ -681,7 +685,7 @@ local function CH_CheckVars()
      CH_PM["setsize"] = "0";   
   end
   if (not CH_PM["fontsize"] ) then  -- wielkość czcionki
-     CH_PM["fontsize"] = "14";
+     CH_PM["fontsize"] = "20";
   end
   if (not CH_PM["setsizeW"] ) then   -- uaktywnij zmiany wielkości czcionki komunikatu Raid Warning
      CH_PM["setsizeW"] = "0";   
@@ -701,7 +705,7 @@ local function CH_SetCheckButtonState()
   if (CH_PM["setsize"]=="1") then
      CHOpis1:SetFont(CH_Font, fontsize);
   else   
-     CHOpis1:SetFont(CH_Font, 14);
+     CHOpis1:SetFont(CH_Font, 20);
   end
   CHWarningSize:SetValue(CH_PM["setsizeW"]=="1");
   fontsize = tonumber(CH_PM["fontsizeW"]);
