@@ -421,6 +421,11 @@ local function CH_OnChar(self, character)    -- wprowadzono znak litery z klawia
          CH_BuforLength = 0;
          CH_BuforCursor = 0;
          CH_highlight_text = false;
+         if (CH_ED_mode == 0) then
+            CH_ToggleButton:SetNormalFontObject("GameFontRed");      -- litery EN czerwone
+         else
+            CH_ToggleButton:SetNormalFontObject("GameFontNormal");   -- litery AR żółte
+         end
       end
       CH_BuforLength = CH_BuforLength + 1;      -- bufor powiększył się o 1 element
       if (CH_BuforLength == 1) then             -- pierwsza litera w edytorze
@@ -497,6 +502,7 @@ local function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key: spradź cz
    end
    if (CH_key_ctrl and (key == "A") and (strlen(self:GetText())>0)) then  -- wciśnięto klawisze Ctrl+A: zaznaczono tekst w editBox
       CH_highlight_text = true;
+      CH_ToggleButton:SetNormalFontObject("GameFontBlack");   -- litery EN/AR czarne
    end
    if (CH_ToggleButton:IsEnabled()) then                 -- obsługa bufora włączona?
       if (CH_ED_mode == 1) then        -- mamy tryb arabski
