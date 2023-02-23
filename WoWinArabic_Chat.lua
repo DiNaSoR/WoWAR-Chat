@@ -234,7 +234,7 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          output = arg1.." :"..playerLink.." [Raid Leader]";
       elseif (event == "CHAT_MSG_RAID_WARNING") then
          local _font1, _size1, _3 = RaidWarningFrameSlot1:GetFont(); -- odczytaj aktualną czcionkę i rozmiar
-         if (CH_PS["setsizeW"] == "1") then    -- mamy włączoną wielkość czcionki do komunikatu Raid Warning
+         if (CH_PM["setsizeW"] == "1") then    -- mamy włączoną wielkość czcionki do komunikatu Raid Warning
             _size1 = tonumber(CH_PM["fontsizeW"]);
          end
          RaidWarningFrameSlot1:SetFont(CH_Font, _size1);
