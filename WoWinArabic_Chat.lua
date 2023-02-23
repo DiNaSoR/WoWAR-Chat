@@ -1,5 +1,6 @@
 ﻿-- Addon: WoWinArabic-Chat (version: 10.01) 2023.02.23
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
+-- ملاحظة: الإضافة تدعم اللغة العربية في الدردشة في لعبة والد اوف واركرافت.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
 
@@ -20,7 +21,7 @@ local CH_key_ctrl = false;
 local CH_key_shift = false;
 local CH_key_alt = false;
 local CH_highlight_text = false;
-local CH_BSize = 18;            -- default size of chat bubbles
+local CH_BSize = 14;            -- default size of chat bubbles
 
 -- fonty z arabskimi znakami
 local CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\calibri.ttf";
@@ -31,8 +32,7 @@ local CH_Interface = {
    active      = "قم بتفعيل الإضافة",   -- Activate the addon 
    settings    = "خيارات إضافية",      -- Addon settings 
    font_activ  = "تفعيل وظيفة تغيير حجم الخط في الفقاعات",  -- activate the function of changing the font size in the bubbles 
-   font_size   = "حجم الخط",    -- font size 
-   font_activ2 = "تفعيل وظيفة تغيير حجم الخط في الفقاعات GNINRAW DIAR",  -- activate the function of changing the font size in Raid Warning Text 
+   font_size   = "حجم الخط",    -- font size  
    }; 
 
 -------------------------------------------------------------------------------------------------------
@@ -688,7 +688,7 @@ local function CH_CheckVars()
      CH_PM["setsize"] = "0";   
   end
   if (not CH_PM["fontsize"] ) then  -- wielkość czcionki
-     CH_PM["fontsize"] = "20";
+     CH_PM["fontsize"] = "14";
   end
 end
   
@@ -702,7 +702,7 @@ local function CH_SetCheckButtonState()
   if (CH_PM["setsize"]=="1") then
      CHOpis1:SetFont(CH_Font, fontsize);
   else   
-     CHOpis1:SetFont(CH_Font, 20);
+     CHOpis1:SetFont(CH_Font, 14);
   end
 end
 
@@ -724,6 +724,15 @@ CHOptionsHeader:ClearAllPoints();
 CHOptionsHeader:SetPoint("TOPLEFT", 180, -16);
 CHOptionsHeader:SetText("2023 ﺔﻨﺴﻟ Platine ﺭﻮﻄﻤﻟﺍ "..CH_version.." ﺔﺨﺴﻧ WoWinArabic-Chat ﺔﻓﺎﺿﺇ");
 CHOptionsHeader:SetFont(CH_Font, 16);
+
+local CHDateOfBase = CHOptions:CreateFontString(nil, "ARTWORK");
+CHDateOfBase:SetFontObject(GameFontNormalLarge);
+CHDateOfBase:SetJustifyH("LEFT"); 
+CHDateOfBase:SetJustifyV("TOP");
+CHDateOfBase:ClearAllPoints();
+CHDateOfBase:SetPoint("TOPRIGHT", CHOptionsHeader, "TOPRIGHT", 0, -22);
+CHDateOfBase:SetText("DragonArab ﺔﻴﺑﺮﻌﻟﺍ ﺔﻐﻠﻟﺍ ﻞﻴﻜﺸﺗ ﺭﻮﻄﻣ");
+CHDateOfBase:SetFont(CH_Font, 16);
 
 local CHCheckButton1 = CreateFrame("CheckButton", "CHCheckButton1", CHOptions, "SettingsCheckBoxControlTemplate");
 CHCheckButton1.CheckBox:SetScript("OnClick", function(self) if (CH_PM["active"]=="1") then CH_PM["active"]="0" else CH_PM["active"]="1" end; end);
@@ -785,7 +794,7 @@ local fontsize = tonumber(CH_PM["fontsize"]);
 if (CH_PM["setsize"]=="1") then
    CHOpis1:SetFont(CH_Font, fontsize);
 else
-   CHOpis1:SetFont(CH_Font, 18);
+   CHOpis1:SetFont(CH_Font, 14);
 end
 CHOpis1:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
 CHOpis1:SetJustifyH("RIGHT");

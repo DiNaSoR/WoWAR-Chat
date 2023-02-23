@@ -7,66 +7,66 @@ local debug_show_form = 0;
 
 -- define a table of reshaping rules for Arabic characters
 AS_Reshaping_Rules = {
-   ["ا"] = {isolated = "ﺍ", initial = "ﺍ", middle = "ﺎ", final = "ﺎ"},  -- ALEF
-   ["آ"] = {isolated = "ﺁ", initial = "ﺁ", middle = "ﺂ", final = "ﺂ"},  -- ALEF WITH MADA ABOVE
-   ["أ"] = {isolated = "ﺃ", initial = "ﺃ", middle = "ﺄ", final = "ﺄ"},  -- ALEF WITH HAMZA ABOVE
-   ["إ"] = {isolated = "ﺇ", initial = "ﺇ", middle = "ﺈ", final = "ﺈ"},  -- ALEF WITH HAMZA BELOW
-   ["ب"] = {isolated = "ب", initial = "ﺑ", middle = "ﺒ", final = "ﺐ"},  -- BA
-   ["ت"] = {isolated = "ت", initial = "ﺗ", middle = "ﺘ", final = "ﺖ"},  -- TA
-   ["ث"] = {isolated = "ث", initial = "ﺛ", middle = "ﺜ", final = "ﺚ"},  -- THA
-   ["ج"] = {isolated = "ج", initial = "ﺟ", middle = "ﺠ", final = "ﺞ"},  -- JIM
-   ["ح"] = {isolated = "ح", initial = "ﺣ", middle = "ﺤ", final = "ﺢ"},  -- HAH
-   ["خ"] = {isolated = "خ", initial = "ﺧ", middle = "ﺨ", final = "ﺦ"},  -- KHAH
-   ["د"] = {isolated = "ﺩ", initial = "ﺩ", middle = "ﺪ", final = "ﺪ"},  -- DAL
-   ["ذ"] = {isolated = "ﺫ", initial = "ﺫ", middle = "ﺬ", final = "ﺬ"},  -- DHAL
-   ["ر"] = {isolated = "ﺭ", initial = "ﺭ", middle = "ﺮ", final = "ﺮ"},  -- RA
-   ["ز"] = {isolated = "ﺯ", initial = "ﺯ", middle = "ﺰ", final = "ﺰ"},  -- ZAIN
-   ["س"] = {isolated = "س", initial = "ﺳ", middle = "ﺴ", final = "ﺲ"},  -- SIN
-   ["ش"] = {isolated = "ش", initial = "ﺷ", middle = "ﺸ", final = "ﺶ"},  -- SHIN
-   ["ص"] = {isolated = "ص", initial = "ﺻ", middle = "ﺼ", final = "ﺺ"},  -- SAD
-   ["ض"] = {isolated = "ض", initial = "ﺿ", middle = "ﻀ", final = "ﺾ"},  -- DAD
-   ["ط"] = {isolated = "ط", initial = "ﻃ", middle = "ﻂ", final = "ﻂ"},  -- TAH
-   ["ظ"] = {isolated = "ظ", initial = "ﻇ", middle = "ﻈ", final = "ﻆ"},  -- ZAH
-   ["ع"] = {isolated = "ع", initial = "ﻋ", middle = "ﻌ", final = "ﻊ"},  -- AIN
-   ["غ"] = {isolated = "غ", initial = "ﻏ", middle = "ﻐ", final = "ﻎ"},  -- GHAIN
-   ["ف"] = {isolated = "ف", initial = "ﻓ", middle = "ﻔ", final = "ﻒ"},  -- FEH
-   ["ق"] = {isolated = "ق", initial = "ﻗ", middle = "ﻘ", final = "ﻖ"},  -- QAF
-   ["ك"] = {isolated = "ك", initial = "ﻛ", middle = "ﻜ", final = "ﻚ"},  -- KAF
-   ["ل"] = {isolated = "ل", initial = "ﻟ", middle = "ﻠ", final = "ﻞ"},  -- LAM
-   ["م"] = {isolated = "م", initial = "ﻣ", middle = "ﻤ", final = "ﻢ"},  -- MIM
-   ["ن"] = {isolated = "ن", initial = "ﻧ", middle = "ﻨ", final = "ﻦ"},  -- NUN
-   ["ي"] = {isolated = "ي", initial = "ﻳ", middle = "ﻴ", final = "ﻲ"},  -- YA
-   ["ئ"] = {isolated = "ﺉ", initial = "ﺋ", middle = "ﺌ", final = "ﺊ"},  -- YEH WITH HAMZA ABOVE
-   ["ى"] = {isolated = "ﻯ", initial = "ﻯ", middle = "ﻯ", final = "ﻰ"},  -- ALEF MAKSURA
-   ["و"] = {isolated = "و", initial = "و", middle = "ﻮ", final = "ﻮ"},  -- WAW
-   ["ؤ"] = {isolated = "ﺅ", initial = "ﺅ", middle = "ﺆ", final = "ﺆ"},  -- WAW WITH HAMZA ABOVE
-   ["ه"] = {isolated = "ﻩ", initial = "ﻫ", middle = "ﻬ", final = "ﻪ"},  -- HAH
-   ["ة"] = {isolated = "ﺓ", initial = "ﺓ", middle = "ﺓ", final = "ﺔ"},  -- TAH
-   ["ﻻ"] = {isolated = "ﻻ", initial = "ﻻ", middle = "ﻼ", final = "ﻼ"},  -- LAM WITH ALEF
-   ["ﻵ"] = {isolated = "ﻵ", initial = "ﻵ", middle = "ﻶ", final = "ﻶ"},  -- LAM WITH ALEF WITH MADDA
-   ["لأ"] = {isolated = "لأ", initial = "لأ", middle = "ﻸ", final = "ﻸ"},  -- LAM WITH ALEF WITH HAMZA ABOVE
-   ["لإ"] = {isolated = "لإ", initial = "لإ", middle = "ﻺ", final = "ﻺ"},  -- LAM WITH ALEF WITH HAMZA BELOW
-   ["ء"] = {isolated = "ء", initial = "ﺀ", middle = "ﺀ", final = "ﺀ"},  -- HAMZA
+   ["ا"] = {isolated = "ا", initial = "ا", middle = "ﺎ", final = "ﺎ"},-- ALEF
+   ["ﺁ"] = {isolated = "ﺁ", initial = "ﺁ", middle = "ﺂ", final = "ﺂ"},-- ALEF WITH MADA ABOVE
+   ["أ"] = {isolated = "أ", initial = "أ", middle = "ﺄ", final = "ﺄ"},-- ALEF WITH HAMZA ABOVE
+   ["إ"] = {isolated = "إ", initial = "إ", middle = "ﺈ", final = "ﺈ"},-- ALEF WITH HAMZA BELOW
+   ["ب"] = {isolated = "ب", initial = "ﺑ", middle = "ﺒ", final = "ﺐ"},-- BA
+   ["ت"] = {isolated = "ت", initial = "ﺗ", middle = "ﺘ", final = "ﺖ"},-- TA
+   ["ث"] = {isolated = "ث", initial = "ﺛ", middle = "ﺜ", final = "ﺚ"},-- THA
+   ["ج"] = {isolated = "ج", initial = "ﺟ", middle = "ﺠ", final = "ﺞ"},-- JIM
+   ["ح"] = {isolated = "ح", initial = "ﺣ", middle = "ﺤ", final = "ﺢ"},-- HAH
+   ["خ"] = {isolated = "خ", initial = "ﺧ", middle = "ﺨ", final = "ﺦ"},-- KHAH
+   ["د"] = {isolated = "د", initial = "د", middle = "ﺪ", final = "ﺪ"},-- DAL
+   ["ذ"] = {isolated = "ذ", initial = "ذ", middle = "ﺬ", final = "ﺬ"},-- DHAL
+   ["ر"] = {isolated = "ر", initial = "ر", middle = "ﺮ", final = "ﺮ"},-- RA
+   ["ز"] = {isolated = "ز", initial = "ز", middle = "ﺰ", final = "ﺰ"},-- ZAIN
+   ["س"] = {isolated = "س", initial = "ﺳ", middle = "ﺴ", final = "ﺲ"},-- SIN
+   ["ش"] = {isolated = "ش", initial = "ﺷ", middle = "ﺸ", final = "ﺶ"},-- SHIN
+   ["ص"] = {isolated = "ص", initial = "ﺻ", middle = "ﺼ", final = "ﺺ"},-- SAD
+   ["ض"] = {isolated = "ض", initial = "ﺿ", middle = "ﻀ", final = "ﺾ"},-- DAD
+   ["ط"] = {isolated = "ط", initial = "ﻃ", middle = "ﻂ", final = "ﻂ"},-- TAH
+   ["ظ"] = {isolated = "ظ", initial = "ﻇ", middle = "ﻈ", final = "ﻆ"},-- ZAH
+   ["ع"] = {isolated = "ع", initial = "ﻋ", middle = "ﻌ", final = "ﻊ"},-- AIN
+   ["غ"] = {isolated = "غ", initial = "ﻏ", middle = "ﻐ", final = "ﻎ"},-- GHAIN
+   ["ف"] = {isolated = "ف", initial = "ﻓ", middle = "ﻔ", final = "ﻒ"},-- FEH
+   ["ق"] = {isolated = "ق", initial = "ﻗ", middle = "ﻘ", final = "ﻖ"},-- QAF
+   ["ك"] = {isolated = "ك", initial = "ﻛ", middle = "ﻜ", final = "ﻚ"},-- KAF
+   ["ل"] = {isolated = "ل", initial = "ﻟ", middle = "ﻠ", final = "ﻞ"},-- LAM
+   ["م"] = {isolated = "م", initial = "ﻣ", middle = "ﻤ", final = "ﻢ"},-- MIM
+   ["ن"] = {isolated = "ن", initial = "ﻧ", middle = "ﻨ", final = "ﻦ"},-- NUN
+   ["ي"] = {isolated = "ي", initial = "ﻳ", middle = "ﻴ", final = "ﻲ"},-- YA
+   ["ئ"] = {isolated = "ئ", initial = "ﺋ", middle = "ﺌ", final = "ﺊ"},-- YEH WITH HAMZA ABOVE
+   ["ى"] = {isolated = "ى", initial = "ى", middle = "ى", final = "ﻰ"},-- ALEF MAKSURA
+   ["و"] = {isolated = "و", initial = "و", middle = "ﻮ", final = "ﻮ"},-- WAW
+   ["ؤ"] = {isolated = "ؤ", initial = "ﺆ", middle = "ﺆ", final = "ﺆ"},-- WAW WITH HAMZA ABOVE
+   ["ه"] = {isolated = "ﻩ", initial = "ﻫ", middle = "ﻬ", final = "ﻪ"},-- HAH
+   ["ة"] = {isolated = "ة", initial = "ة", middle = "ة", final = "ﺔ"},-- TAH
+   ["ﻻ"] = {isolated = "ﻻ", initial = "ﻻ", middle = "ﻼ", final = "ﻼ"},-- LAM WITH ALEF
+   ["ﻵ"] = {isolated = "ﻵ", initial = "ﻵ", middle = "ﻶ", final = "ﻶ"},-- LAM WITH ALEF WITH MADDA
+   ["لأ"] = {isolated = "ﻷ", initial = "ﻷ", middle = "ﻸ", final = "ﻸ"},-- LAM WITH ALEF WITH HAMZA ABOVE
+   ["لإ"] = {isolated = "ﻹ", initial = "ﻹ", middle = "ﻺ", final = "ﻺ"},-- LAM WITH ALEF WITH HAMZA BELOW
+   ["ء"] = {isolated = "ء", initial = "ﺀ", middle = "ﺀ", final = "ﺀ"},-- HAMZA
    };
 
 AS_Reshaping_Rules2 = {
-   ["ل".."ا"] = {isolated = "ﻻ", initial="ﻻ",  middle="ﻼ", final="ﻼ"},  -- Arabic ligature LAM with ALEF
-   ["ل".."آ"] = {isolated = "ﻵ", initial="ﻵ",  middle="ﻶ", final="ﻶ"},  -- Arabic ligature LAM with ALEF with MADDA
-   ["ل".."أ"] = {isolated = "لأ", initial="لأ",  middle="ﻸ", final="ﻸ"},  -- Arabic ligature LAM with ALEF with HAMZA above
-   ["ل".."إ"] = {isolated = "لإ", initial="لإ",  middle="ﻺ", final="ﻺ"},  -- Arabic ligature LAM with ALEF with HAMZA below
-   --Test ligatures
-   ["إ".."ع"] = {isolated = "0",  initial="ﻋإ", middle="ﻋﺈ", final="3"},-- Arabic ligature ALEF with Hamaz below + AIN Middle
-   ["ء".."و"] = {isolated = "وء", initial="وء", middle="وء", final="وء"},
-   ["ي".."ء"] = {isolated = "0",  initial="1",  middle="ءﻲ", final="3"},        
+   ["ل".."ا"] = {isolated = "ﻻ", initial="ﻻ",  middle="ﻼ",  final="ﻼ"},            -- Arabic ligature LAM with ALEF
+   ["ل".."أ"] = {isolated = "ﻷ", initial="ﻷ",  middle="ﻸ",  final="ﻸ"},            -- Arabic ligature LAM with ALEF with HAMZA above
+   ["ل".."إ"] = {isolated = "ﻹ", initial="ﻹ",  middle="ﻺ",  final="ﻺ"},            -- Arabic ligature LAM with ALEF with HAMZA below
+   ["ل".."آ"] = {isolated = "ﻵ", initial="ﻵ",  middle="ﻶ",  final="ﻶ"},            -- Arabic ligature LAM with ALEF with MADDA
+   --Test
+   ["إ".."ع"] = {isolated = "0",    initial="ﻋإ",  middle="ﻋﺈ",   final="3"},           -- Arabic ligature ALEF with Hamaz below + AIN Middle
+   ["ء".."و"] = {isolated = "وء",   initial="وء",  middle="وء",   final="وء"},
+   ["ي".."ء"] = {isolated = "0",    initial="1",   middle="ءﻲ",   final="3"},        
    };
 
 AS_Reshaping_Rules3 = {
-   ["ا".."ل".."آ"] = {isolated = "ﻵا",  initial="ﻵا",  middle="ﻵا",  final="ﻶا"},  -- Arabic ligature ALEF+LAM+(ALEF with MADA)
-   ["ا".."ل".."أ"] = {isolated = "ﻷا",  initial="ﻷا",  middle="ﻷا",  final="ﻸا"},  -- Arabic ligature ALEF+LAM+(ALEF with HAMZA)
-   ["ا".."ل".."إ"] = {isolated = "ﻹا",  initial="ﻹا",  middle="ﻹا",  final="ﻺا"},  -- Arabic ligature ALEF+LAM+(ALEF with HAMZA Below)
-   ["ا".."ل".."ا"] = {isolated = "ﻻا",  initial="ﻻا",  middle="ﻻا",  final="ﻼا"},  -- Arabic ligature ALEF+LAM+(ALEF with ALEF)
-   ["ش".."ي".."ء"] = {isolated = "ءﻲﺷ", initial="ءﻲﺷ", middle="ءﻲﺸ", final="ءﻲﺸ"}, -- Arabic ligature SHIN+YEH+HAMZA Below
-   ["ل".."ا".."ز"] = {isolated = "زﻻ",  initial="زﻻ",  middle="زﻼ",  final="زﻼ"},  -- Arabic ligature LAM+ALEF+ZAIN
+   ["ا".."ل".."آ"] = {isolated = "ﻵا",  initial="ﻵا", middle="ﻵا", final="ﻶا"},        -- Arabic ligature ALEF+LAM+(ALEF with MADA)
+   ["ا".."ل".."أ"] = {isolated = "ﻷا",  initial="ﻷا", middle="ﻷا", final="ﻸا"},        -- Arabic ligature ALEF+LAM+(ALEF with HAMZA)
+   ["ا".."ل".."إ"] = {isolated = "ﻹا",  initial="ﻹا", middle="ﻹا", final="ﻺا"},        -- Arabic ligature ALEF+LAM+(ALEF with HAMZA Below)
+   ["ا".."ل".."ا"] = {isolated = "ﻻا",  initial="ﻻا", middle="ﻻا", final="ﻼا"},        -- Arabic ligature ALEF+LAM+(ALEF with ALEF)
+   ["ش".."ي".."ء"] = {isolated = "ءﻲﺷ",  initial="ءﻲﺷ", middle="ءﻲﺸ", final="ءﻲﺸ"},    -- Arabic ligature SHIN+YEH+HAMZA Below
+   ["ل".."ا".."ز"] = {isolated = "زﻻ",  initial="زﻻ", middle="زﻼ", final="زﻼ"},        -- Arabic ligature LAM+ALEF+ZAIN
    };
 
 -------------------------------------------------------------------------------------------------------
