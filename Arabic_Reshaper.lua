@@ -39,7 +39,7 @@ AS_Reshaping_Rules = {
    ["ئ"] = {isolated = "ئ", initial = "ﺋ", middle = "ﺌ", final = "ﺊ"},-- YEH WITH HAMZA ABOVE
    ["ى"] = {isolated = "ى", initial = "ى", middle = "ى", final = "ﻰ"},-- ALEF MAKSURA
    ["و"] = {isolated = "و", initial = "و", middle = "ﻮ", final = "ﻮ"},-- WAW
-   ["ؤ"] = {isolated = "ؤ", initial = "ﺆ", middle = "ﺆ", final = "ﺆ"},-- WAW WITH HAMZA ABOVE
+   ["ؤ"] = {isolated = "ؤ", initial = "ؤ", middle = "ﺆ", final = "ﺆ"},-- WAW WITH HAMZA ABOVE
    ["ه"] = {isolated = "ﻩ", initial = "ﻫ", middle = "ﻬ", final = "ﻪ"},-- HAH
    ["ة"] = {isolated = "ة", initial = "ة", middle = "ة", final = "ﺔ"},-- TAH
    ["ﻻ"] = {isolated = "ﻻ", initial = "ﻻ", middle = "ﻼ", final = "ﻼ"},-- LAM WITH ALEF
