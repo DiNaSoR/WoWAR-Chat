@@ -1,6 +1,6 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.01) 2023.02.23
+﻿-- Addon: WoWinArabic-Chat (version: 10.01) 2023.03.01
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
--- ملاحظة: الإضافة تدعم اللغة العربية في الدردشة في لعبة والد اوف واركرافت.
+-- ملاحظة: الإضافة تدعم اللغة العربية في الدردشة في لعبة والد اوف واركرافت
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Special thanks for DragonArab for helping to create letter reshaping rules.
 
@@ -221,24 +221,48 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          output = arg1.." :"..playerLink.." "..AS_UTF8reverse("إلى");    
       elseif ((event == "CHAT_MSG_PARTY") or (event == "CHAT_MSG_PARTY_LEADER")) then
          if (event == "CHAT_MSG_PARTY_LEADER") then
-            output = arg1.." :"..playerLink.." [Party Leader]";
+            if (Prat) then       -- jest aktywny dodatek Prat
+               output = arg1.." :"..playerLink.." [PL]";
+            else
+               output = arg1.." :"..playerLink.." [Party Leader]";
+            end
          else
-            output = arg1.." :"..playerLink.." [Party]";
+            if (Prat) then       -- jest aktywny dodatek Prat
+               output = arg1.." :"..playerLink.." [P]";
+            else
+               output = arg1.." :"..playerLink.." [Party]";
+            end
          end
          local czystyArg = CH_Usun_Linki(arg1);
          tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
          CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
       elseif (event == "CHAT_MSG_RAID") then
-         output = arg1.." :"..playerLink.." [Raid]";
+         if (Prat) then       -- jest aktywny dodatek Prat
+            output = arg1.." :"..playerLink.." [R]";
+         else
+            output = arg1.." :"..playerLink.." [Raid]";
+         end
       elseif (event == "CHAT_MSG_RAID_LEADER") then
-         output = arg1.." :"..playerLink.." [Raid Leader]";
+         if (Prat) then       -- jest aktywny dodatek Prat
+            output = arg1.." :"..playerLink.." [RL]";
+         else
+            output = arg1.." :"..playerLink.." [Raid Leader]";
+         end
       elseif (event == "CHAT_MSG_RAID_WARNING") then
          local _font1, _size1, _3 = RaidWarningFrameSlot1:GetFont(); -- odczytaj aktualną czcionkę i rozmiar
          RaidWarningFrameSlot1:SetFont(CH_Font, _size1);
          RaidWarningFrameSlot2:SetFont(CH_Font, _size1);
-         output = arg1.." :"..playerLink.." [Raid Warning]";
+         if (Prat) then       -- jest aktywny dodatek Prat
+            output = arg1.." :"..playerLink.." [RW]";
+         else
+            output = arg1.." :"..playerLink.." [Raid Warning]";
+         end
       elseif ((event == "CHAT_MSG_GUILD") or (event == "CHAT_MSG_OFFICER")) then
-         output = arg1.." :"..playerLink.." [Guild]";
+         if (Prat) then       -- jest aktywny dodatek Prat
+            output = arg1.." :"..playerLink.." [G]";
+         else
+            output = arg1.." :"..playerLink.." [Guild]";
+         end
       elseif ((event == "CHAT_MSG_BATTLEGROUND") or (event == "CHAT_MSG_BATTLEGROUND_LEADER")) then
          output = arg1.." :"..playerLink;
       else
@@ -690,6 +714,9 @@ local function CH_CheckVars()
   if (not CH_PM["fontsize"] ) then  -- wielkość czcionki
      CH_PM["fontsize"] = "14";
   end
+  if (not CH_PM["fontname"] ) then  -- nazwa czcionki
+     CH_PM["fontname"] = "calibri.ttf";
+  end
 end
   
 -------------------------------------------------------------------------------------------------------
@@ -704,6 +731,60 @@ local function CH_SetCheckButtonState()
   else   
      CHOpis1:SetFont(CH_Font, 14);
   end
+end
+
+-------------------------------------------------------------------------------------------------------
+
+local function CH_createDropdown(opts)
+--- Opts:
+---     name (string): Name of the dropdown (lowercase)
+---     parent (Frame): Parent frame of the dropdown.
+---     items (Table): String table of the dropdown options.
+---     defaultVal (String): String value for the dropdown to default to (empty otherwise).
+---     changeFunc (Function): A custom function to be called, after selecting a dropdown option.
+   local dropdown_name = '$parent_' .. opts['name'] .. '_dropdown';
+   local menu_items = opts['items'] or {};
+   local title_text = opts['title'] or '';
+   local dropdown_width = 0;
+   local default_val = opts['defaultVal'] or '';
+   local change_func = opts['changeFunc'] or function (dropdown_val) end;
+
+   local dropdown = CreateFrame("Frame", dropdown_name, opts['parent'], 'UIDropDownMenuTemplate');
+   local dd_title = dropdown:CreateFontString(nil, 'OVERLAY', 'GameFontNormal');
+   dd_title:SetPoint("TOPLEFT", 20, 15);
+   dd_title:SetFont(CH_Font, 16);
+
+   for _, item in pairs(menu_items) do -- Sets the dropdown width to the largest item string width.
+      dd_title:SetText(item);
+      local text_width = dd_title:GetStringWidth() + 20;
+      if (text_width > dropdown_width) then
+         dropdown_width = text_width;
+      end
+   end
+
+   UIDropDownMenu_SetWidth(dropdown, dropdown_width);
+   UIDropDownMenu_SetSelectedValue(dropdown, default_val);
+   UIDropDownMenu_SetText(dropdown, default_val);
+   dd_title:SetText(title_text);
+
+   UIDropDownMenu_Initialize(dropdown, function(self, level, _)
+      local info = UIDropDownMenu_CreateInfo();
+      for key, val in pairs(menu_items) do
+         info.text = val;
+         info.checked = false;
+         info.menuList= key;
+         info.hasArrow = false;
+         info.func = function(b)
+            UIDropDownMenu_SetSelectedValue(dropdown, b.value, b.value);
+            UIDropDownMenu_SetText(dropdown, b.value);
+            b.checked = true;
+            change_func(dropdown, b.value);
+         end
+         UIDropDownMenu_AddButton(info);
+      end
+   end);
+
+   return dropdown;
 end
 
 -------------------------------------------------------------------------------------------------------
@@ -736,8 +817,8 @@ CHDateOfBase:SetFont(CH_Font, 16);
 
 local CHCheckButton1 = CreateFrame("CheckButton", "CHCheckButton1", CHOptions, "SettingsCheckBoxControlTemplate");
 CHCheckButton1.CheckBox:SetScript("OnClick", function(self) if (CH_PM["active"]=="1") then CH_PM["active"]="0" else CH_PM["active"]="1" end; end);
-CHCheckButton1.CheckBox:SetPoint("TOPLEFT", CHOptionsHeader, "BOTTOMLEFT", 390, -30);    -- pozycja przycisku CheckBox
-CHCheckButton1:SetPoint("TOPRIGHT", CHOptionsHeader, "BOTTOMRIGHT", 125, -32);     -- pozycja opisu przycisku CheckBox
+CHCheckButton1.CheckBox:SetPoint("TOPLEFT", CHOptionsHeader, "BOTTOMLEFT", 390, -40);    -- pozycja przycisku CheckBox
+CHCheckButton1:SetPoint("TOPRIGHT", CHOptionsHeader, "BOTTOMRIGHT", 125, -42);     -- pozycja opisu przycisku CheckBox
 CHCheckButton1.Text:SetText(AS_UTF8reverse(CH_Interface.active));     -- dodatek aktywny
 CHCheckButton1.Text:SetFont(CH_Font, 18);
 CHCheckButton1.Text:SetJustifyH("RIGHT");
@@ -794,10 +875,44 @@ local fontsize = tonumber(CH_PM["fontsize"]);
 if (CH_PM["setsize"]=="1") then
    CHOpis1:SetFont(CH_Font, fontsize);
 else
-   CHOpis1:SetFont(CH_Font, 14);
+   CHOpis1:SetFont(CH_Font, 18);
 end
 CHOpis1:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
 CHOpis1:SetJustifyH("RIGHT");
+
+local select_opts = 
+   {
+   ['name'] = 'CHfontChoice',
+   ['parent'] = CHOptions,
+   ['title'] = AS_UTF8reverse('ملف اختيار الخط العربي:'),
+   ['items']= {'calibri.ttf', 'second_font.ttf', 'other_font.ttf' },   -- nazwy plików z czcionkami arabskimi do wyboru przez gracza
+   ['defaultVal'] = CH_Selected_Font, 
+   ['changeFunc'] = function(dropdown_frame, dropdown_val)
+      CH_PM["fontname"] = dropdown_val;
+      CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\" .. CH_PM["fontname"];
+      CHOptionsHeader:SetFont(CH_Font, 16);
+      CHOptionsHeader:SetText("2023 ﺔﻨﺴﻟ Platine ﺭﻮﻄﻤﻟﺍ "..CH_version.." ﺔﺨﺴﻧ WoWinArabic-Chat ﺔﻓﺎﺿﺇ");
+      CHDateOfBase:SetFont(CH_Font, 16);
+      CHDateOfBase:SetText("DragonArab ﺔﻴﺑﺮﻌﻟﺍ ﺔﻐﻠﻟﺍ ﻞﻴﻜﺸﺗ ﺭﻮﻄﻣ");
+      CHCheckButton1.Text:SetFont(CH_Font, 18);
+      CHCheckButton1.Text:SetText(AS_UTF8reverse(CH_Interface.active));
+      CHOptionsMode:SetText(":"..AS_UTF8reverse(CH_Interface.settings));          -- Ustawienia dodatku
+      CHOptionsMode:SetFont(CH_Font, 18);
+      CHCheckSize.Text:SetFont(CH_Font, 18);
+      CHCheckSize.Text:SetText(AS_UTF8reverse(CH_Interface.font_activ));   
+      getglobal(CHslider1:GetName() .. 'Text'):SetFont(CH_Font, 16);
+      getglobal(CHslider1:GetName() .. 'Text'):SetText(AS_UTF8reverse(CH_Interface.font_size));
+      if (CH_PM["setsize"]=="1") then
+         CHOpis1:SetFont(CH_Font, fontsize);
+      else
+         CHOpis1:SetFont(CH_Font, 18);
+      end
+      CHOpis1:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
+      end
+   }
+local CHselectDD = CH_createDropdown(select_opts);    -- rozwijane w dół menu wyboru czcionki arabskiej
+CHselectDD:ClearAllPoints();
+CHselectDD:SetPoint("TOPRIGHT", CHslider1, "BOTTOMRIGHT", 10, -50);
 
 
 local CHText0 = CHOptions:CreateFontString(nil, "ARTWORK");
@@ -871,6 +986,15 @@ local function CH_OnEvent(self, event, name, ...)
       DEFAULT_CHAT_FRAME.editBox:SetScript("OnShow", CH_OnShow);       -- otworzono okno edycji tekstu
       DEFAULT_CHAT_FRAME.editBox:SetScript("OnHide", CH_OnHide);       -- zamknięto okno edycji tekstu
       
+      for i=1, 10, 1 do       -- edit Boxes other Tabs
+         getglobal("ChatFrame" .. tostring(i) .. "EditBox"):SetFont(CH_Font, _sizeC, _C);
+         getglobal("ChatFrame" .. tostring(i) .. "EditBox"):SetScript("OnChar", CH_OnChar);       -- aby zmieniał pozycję kursora przy wprowadzaniu kolejnych liter
+         getglobal("ChatFrame" .. tostring(i) .. "EditBox"):SetScript("OnKeyDown", CH_OnKeyDown); -- wciśnięto jakiś klawisz
+         getglobal("ChatFrame" .. tostring(i) .. "EditBox"):SetScript("OnKeyUp", CH_OnKeyUp);     -- puszczono jakiś klawisz
+         getglobal("ChatFrame" .. tostring(i) .. "EditBox"):SetScript("OnShow", CH_OnShow);       -- otworzono okno edycji tekstu
+         getglobal("ChatFrame" .. tostring(i) .. "EditBox"):SetScript("OnHide", CH_OnHide);       -- zamknięto okno edycji tekstu
+      end
+      
       CH_ToggleButton = CreateFrame("Button", nil, DEFAULT_CHAT_FRAME, "UIPanelButtonTemplate");
       CH_ToggleButton:SetWidth(34);
       CH_ToggleButton:SetHeight(20);
@@ -920,6 +1044,7 @@ local function CH_OnEvent(self, event, name, ...)
       SLASH_WOWINARABIC_CHAT2 = "/archat";
       CH_CheckVars();
       CH_BlizzardOptions();
+      CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\" .. CH_PM["fontname"];
       DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat ver. "..CH_version.." - "..CH_Interface.started);
       CH_Frame.ADDON_LOADED = nil;
    end
@@ -1006,7 +1131,11 @@ function CH_LineChat(txt, font_size)
             last_space = last_space + 1;
          end
          if (link_start_stop == false) then           -- nie jesteśmy wewnątrz linku - można sprawdzać
-            CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
+            if (Prat) then       -- jest aktywny dodatek Prat
+               CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth()-(0.35*font_size+0.8)*10);     -- czas w dodatku Prat zabiera nam miejsce
+            else
+               CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
+            end
             CH_TestLine.text:SetText(newstr);
             if (CH_TestLine.text:GetHeight() > font_size*1.5) then   -- tekst nie mieści się już w 1 linii
                newstr = AS_UTF8sub(newstr, last_space+1);            -- tekst od ostatniej spacji
@@ -1039,9 +1168,13 @@ function CH_AddSpaces(txt, snd)                                 -- snd = second 
    if (CH_TestLine == nil) then     -- a own frame for displaying the translation of texts and determining the length
       CH_CreateTestLine();
    end   
-   CH_TestLine:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
-   CH_TestLine:Hide();     -- the frame is invisible in the game
+   if ((Prat) and (snd==0)) then       -- jest aktywny dodatek Prat
+      CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth()-(0.35*_sizeC+0.8)*10);     -- czas w dodatku Prat zabiera nam miejsce
+   else
+      CH_TestLine.text:SetWidth(DEFAULT_CHAT_FRAME:GetWidth());
+   end
    CH_TestLine.text:SetFont(_fontC, _sizeC, _C);
+   CH_TestLine:Hide();     -- the frame is invisible in the game
    local count = 0;
    local text = txt;
    CH_TestLine.text:SetText(text);

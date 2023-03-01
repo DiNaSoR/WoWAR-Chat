@@ -1,0 +1,6 @@
+0.3
+- [Bug] Fix party new windows does not display arabic font in chat box
+- [Add] Option for changing fonts
+- [Add] Prat support
+
+0.2
