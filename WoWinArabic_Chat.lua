@@ -885,7 +885,7 @@ local select_opts =
    ['name'] = 'CHfontChoice',
    ['parent'] = CHOptions,
    ['title'] = AS_UTF8reverse('ملف اختيار الخط العربي:'),
-   ['items']= {'calibri.ttf', 'second_font.ttf', 'other_font.ttf' },   -- nazwy plików z czcionkami arabskimi do wyboru przez gracza
+   ['items']= {'Calibri.ttf', 'Arial.ttf', 'myfont.ttf' },   -- nazwy plików z czcionkami arabskimi do wyboru przez gracza
    ['defaultVal'] = CH_Selected_Font, 
    ['changeFunc'] = function(dropdown_frame, dropdown_val)
       CH_PM["fontname"] = dropdown_val;
@@ -1002,7 +1002,7 @@ local function CH_OnEvent(self, event, name, ...)
       CH_ToggleButton:SetText("EN");
       CH_ToggleButton:Show();
       CH_ToggleButton:ClearAllPoints();
-      CH_ToggleButton:SetPoint("TOPRIGHT", DEFAULT_CHAT_FRAME, "BOTTOMLEFT", -1, -6);
+      CH_ToggleButton:SetPoint("TOPRIGHT", DEFAULT_CHAT_FRAME, "BOTTOMLEFT", 1, -8);
       CH_ToggleButton:SetScript("OnClick", CH_AR_ON_OFF);
 
       CH_ToggleButton2 = CreateFrame("Button", nil, DEFAULT_CHAT_FRAME.editBox, "UIPanelButtonTemplate");
@@ -1022,7 +1022,11 @@ local function CH_OnEvent(self, event, name, ...)
       CH_InsertButton:SetText("←");
       CH_InsertButton:Hide();
       CH_InsertButton:ClearAllPoints();
-      CH_InsertButton:SetPoint("TOPLEFT", DEFAULT_CHAT_FRAME.editBox, "TOPRIGHT", -9, -7);
+      if (Prat) then       -- jest aktywny dodatek Prat
+         CH_InsertButton:SetPoint("TOPLEFT", DEFAULT_CHAT_FRAME.editBox, "TOPRIGHT", -2, -1);
+      else
+         CH_InsertButton:SetPoint("TOPLEFT", DEFAULT_CHAT_FRAME.editBox, "TOPRIGHT", -9, -6);
+      end
       CH_InsertButton:SetScript("OnClick", CH_INS_ON_OFF);
 
       ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", CH_ChatFilter);
