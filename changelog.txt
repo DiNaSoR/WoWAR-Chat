@@ -4,3 +4,7 @@
 - [Add] Prat support
 
 0.2
+- Fix bugs
+
+0.1
+- First release
