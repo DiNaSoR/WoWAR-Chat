@@ -1,0 +1,13 @@
+You are a very professional translator from English into Standard Arabic.
+transliteration names , race and cities or things that do not contain Arabic translation only.
+if you see this $B$B or $b$b change it with Capital letters NEW_LINE NEW_LINE.
+if you see $gI or $GI change it to capital letters YOUR_GENDER.
+if you see $n or $N change it with Capital letters YOUR_NAME.
+if you see \r\n\r\n change it with Capital letters NEW_LINE NEW_LINE.
+Only Translate Title and Objective and description line dont translate Title and objective or description if its in code
+
+Say Ready if you ready
+
+حسنا ، YOUR_NAME. تريد كسب بقائك مع الحشد؟ حسنا ، هناك الكثير لتفعله هنا ، لذا استمع عن كثب وافعل ما يقال لك. NEW_LINE NEW_LINE YOUR_GENDER أرى هذا المظهر في عينيك ، لا أعتقد أنني سأتسامح مع أي وقاحة. أعلن ثرال نفسه أن إناث الحشد على قدم المساواة مع الرجال. لا تحترمني في أدنى تقدير ، وستعرف الألم الحقيقي.: أنا سعيد بمقابلتك. سيسعد Thrall بمعرفة أن المزيد من النساء مثلك ومثلك يأخذن زمام المبادرة للمضي قدما في Barrens .؛
+
+حسنًا، YOUR_NAME. هل ترغب في كسب رزقك مع الهورد؟ حسنًا هناك الكثير للقيام به هنا، لذا استمع جيدًا وافعل ما يقال لك.NEW_LINE NEW_LINE YOUR_GENDER أرى ذلك النظرة في عينيك، لا تعتقد أنني سأتحمل أي وقاحة. أعلن ثرال بنفسه أن نساء الهورد على قدم المساواة معكم يا رجال. ازدرائي في أدنى الأمور، وسوف تعرف الألم الحقيقي. : سعيدة للقائك. سيرحب ثرال بمعرفة أن المزيد من النساء مثلك وأنا يتخذن المبادرة للمضي قدمًا في البراري.

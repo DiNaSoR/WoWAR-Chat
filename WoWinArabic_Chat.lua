@@ -1,8 +1,8 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.01) 2023.03.01
+﻿-- Addon: WoWinArabic-Chat (version: 10.2) 2023.11.25
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
--- ملاحظة: الإضافة تدعم اللغة العربية في الدردشة في لعبة والد اوف واركرافت
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
--- Special thanks for DragonArab for helping to create letter reshaping rules.
+-- Contributor: DragonArab - Developed letter reshaping tables and ligatures (http://WoWinArabic.com)
+
 
 local CH_on_debug = false;
 -- General Variables
