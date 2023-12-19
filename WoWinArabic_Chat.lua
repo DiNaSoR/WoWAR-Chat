@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.2) 2023.11.25
+﻿-- Addon: WoWinArabic-Chat (version: 10.20.01) 2023.12.18
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Contributor: DragonArab - Developed letter reshaping tables and ligatures (http://WoWinArabic.com)
@@ -193,19 +193,24 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
    if (is_arabic) then
       local poz = string.find(arg2, "-");
       local output = "";
+      local playerLink;
       local playerLen = AS_UTF8len(string.sub(arg2, 1, poz-1));
       local _, className = UnitClass(string.sub(arg2, 1, poz-1)); 
       local classColorTable = RAID_CLASS_COLORS[className];
-		local playerLink = GetPlayerLink(arg2, ("[|c"..classColorTable.colorStr.."%s|r]"):format(string.sub(arg2, 1, poz-1)), arg11);
+      if (classColorTable) then
+          playerLink = GetPlayerLink(arg2, ("[|c"..classColorTable.colorStr.."%s|r]"):format(string.sub(arg2, 1, poz-1)), arg11);
+      else
+          playerLink = GetPlayerLink(arg2, ("[|cFFFFFFFF%s|r]"):format(string.sub(arg2, 1, poz-1)), arg11);
+      end
       local _fontC, _sizeC, _C = self:GetFont();   -- odczytaj aktualną czcionkę, rozmiar i typ
       self:SetFont(CH_Font, _sizeC, _C);           -- załaduj arabską czcionkę
       if (event == "CHAT_MSG_SAY") then
-         output = arg1..AS_UTF8reverse(" يتحدث: ")..playerLink;   -- said (forma właściwa)
+         output = arg1..AS_UTF8reverse("يتحدث: ")..playerLink;   -- said (forma właściwa)
          local czystyArg = CH_Usun_Linki(arg1);
          tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
          CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
       elseif (event == "CHAT_MSG_YELL") then
-         output = arg1..AS_UTF8reverse(" يصرخ: ")..playerLink;    -- yelled
+         output = arg1..AS_UTF8reverse("يصرخ: ")..playerLink;    -- yelled
          local czystyArg = CH_Usun_Linki(arg1);
          tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
          CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
@@ -213,7 +218,7 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          if (self:GetName() == "ChatFrame1") then        -- jest komunikat WHISPER w głównym oknie czatu
             return true;                      -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
          end
-         output = arg1..AS_UTF8reverse(" همس: ")..playerLink;     -- whisped
+         output = arg1..AS_UTF8reverse("همس: ")..playerLink;     -- whisped
       elseif (event == "CHAT_MSG_WHISPER_INFORM") then   -- wysyłany szept do innego gracza
          if (self:GetName() == "ChatFrame1") then        -- jest komunikat WHISPER w głównym oknie czatu
             return true;                      -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
@@ -1311,50 +1316,49 @@ CH_Frame:SetScript("OnEvent", CH_OnEvent);
 CH_IsolatedLetter = {
    ["form"] = "isolated",  -- form letters are in UTF-8 code > U+FE80,  isolated letters are in UTF-8 code < U+0650
    
-   ["ﺍ"] = "ا",  ["ﺎ"] = "ا",  -- ALEF: isolated & initial, middle & final form
-   ["ﺁ"] = "آ",  ["ﺂ"] = "آ",  -- ALEF WITH MADA ABOVE:  isolated & initial, middle & final form
-   ["ﺃ"] = "أ",  ["ﺄ"] = "أ",  -- ALEF WITH HAMZA ABOVE: isolated & initial, middle & final form
-   ["ﺇ"] = "إ",  ["ﺈ"] = "إ",  -- ALEF WITH HAMZA BELOW: isolated & initial, middle & final form
-   ["ﺑ"] = "ب",  ["ﺒ"] = "ب",  ["ﺐ"] = "ب",  -- BA:  initial, middle, final form
-   ["ﺗ"] = "ت",  ["ﺜ"] = "ت",  ["ﺚ"] = "ت",  -- THA: initial, middle, final form
-   ["ﺟ"] = "ج",  ["ﺠ"] = "ج",  ["ﺞ"] = "ج",  -- JIM: initial, middle, final form
-   ["ﺣ"] = "ح",  ["ﺤ"] = "ح",  ["ﺢ"] = "ح",  -- HAH: initial, middle, final form
-   ["ﺧ"] = "خ",  ["ﺨ"] = "خ",  ["ﺦ"] = "خ",  -- KHAH:initial, middle, final form
-   ["ﺩ"] = "د",  ["ﺪ"] = "د",  -- DAL:  isolated & initial, middle & final form
-   ["ﺫ"] = "ذ",  ["ﺬ"] = "ذ",  -- DHAL: isolated & initial, middle & final form
-   ["ﺭ"] = "ر",  ["ﺮ"] = "ر",  -- RA:   isolated & initial, middle & final form
-   ["ﺯ"] = "ز",  ["ﺰ"] = "ز",  -- ZAIN: isolated & initial, middle & final form
-   ["ﺳ"] = "س",  ["ﺴ"] = "س",  ["ﺲ"] = "س",  -- SIN: initial, middle, final form
-   ["ﺷ"] = "ش",  ["ﺸ"] = "ش",  ["ﺶ"] = "ش",  -- SHIN: initial, middle, final form
-   ["ﺻ"] = "ص",  ["ﺼ"] = "ص",  ["ﺺ"] = "ص",  -- SAD: initial, middle, final form
-   ["ﺿ"] = "ض",  ["ﻀ"] = "ض",  ["ﺾ"] = "ض",  -- DAD: initial, middle, final form
-   ["ﻃ"] = "ط",  ["ﻂ"] = "ط",  -- TAH: initial, middle & final form
-   ["ﻇ"] = "ظ",  ["ﻈ"] = "ظ",  ["ﻆ"] = "ظ",  -- ZAH: initial, middle, final form
-   ["ﻋ"] = "ع",  ["ﻌ"] = "ع",  ["ﻊ"] = "ع",  -- AIN: initial, middle, final form
-   ["ﻏ"] = "غ",  ["ﻐ"] = "غ",  ["ﻎ"] = "غ",  -- GHAIN: initial, middle, final form
-   ["ﻓ"] = "ف",  ["ﻔ"] = "ف",  ["ﻒ"] = "ف",  -- FEH: initial, middle, final form
-   ["ﻗ"] = "ق",  ["ﻘ"] = "ق",  ["ﻖ"] = "ق",  -- QAF: initial, middle, final form
-   ["ﻛ"] = "ك",  ["ﻜ"] = "ك",  ["ﻚ"] = "ك",  -- KAF: initial, middle, final form
-   ["ﻟ"] = "ل",  ["ﻠ"] = "ل",  ["ﻞ"] = "ل",  -- LAM: initial, middle, final form
-   ["ﻣ"] = "م",  ["ﻤ"] = "م",  ["ﻢ"] = "م",  -- MIM: initial, middle, final form
-   ["ﻧ"] = "ن",  ["ﻨ"] = "ن",  ["ﻦ"] = "ن",  -- NUN: initial, middle, final form
-   ["ﻳ"] = "ي",  ["ﻴ"] = "ي",  ["ﻲ"] = "ي",  -- YA: initial, middle, final form
-   ["ﺉ"] = "ئ",  ["ﺋ"] = "ئ",  ["ﺌ"] = "ئ",  ["ﺊ"] = "ئ",  -- YEH WITH HAMZA ABOVE: isolated, initial, middle, final form
-   ["ﻯ"] = "ى",  ["ﻰ"] = "ى",  -- ALEF MAKSURA: isolated & initial & middle, final form
-   ["ﻭ"] = "و",  ["ﻮ"] = "و",  -- WAW: isolated & initial, middle & final form
-   ["ﺅ"] = "ؤ",  ["ﺆ"] = "ؤ",  -- WAW WITH HAMZA ABOVE: isolated & initial, middle & final form
-   ["ﻩ"] = "ه",  ["ﻫ"] = "ه", ["ﻬ"] = "ه", ["ﻪ"] = "ه",  -- HAH: isolated, initial, middle, final form
-   ["ﺓ"] = "ة",  ["ﺔ"] = "ة",  -- TAH: isolated & initial & middle, final form
-   ["ﻼ"] = "ﻻ",  -- LAM WITH ALEF: middle & final form
-   ["ﻶ"] = "ﻵ",  -- LAM WITH ALEF WITH MADDA: middle & final form
-   ["ﻸ"] = "لأ",  -- LAM WITH ALEF WITH HAMZA ABOVE: middle & final form
-   ["ﻺ"] = "لإ",  -- LAM WITH ALEF WITH HAMZA BELOW: middle & final form
-   ["ﺀ"] = "ء",  -- HAMZA: initial & middle & final form
+   ["ﺍ"] = "ا",  ["ﺎ"] = "ا",                               -- ALEF: isolated & initial, middle & final form
+   ["ﺁ"] = "آ",  ["ﺂ"] = "آ",                               -- ALEF WITH MADA ABOVE:  isolated & initial, middle & final form
+   ["ﺃ"] = "أ",  ["ﺄ"] = "أ",                               -- ALEF WITH HAMZA ABOVE: isolated & initial, middle & final form
+   ["ﺇ"] = "إ",  ["ﺈ"] = "إ",                               -- ALEF WITH HAMZA BELOW: isolated & initial, middle & final form
+   ["ﺑ"] = "ب",  ["ﺒ"] = "ب",  ["ﺐ"] = "ب",                 -- BA:  initial, middle, final form
+   ["ﺗ"] = "ت",  ["ﺜ"] = "ت",  ["ﺚ"] = "ت",                 -- THA: initial, middle, final form
+   ["ﺟ"] = "ج",  ["ﺠ"] = "ج",  ["ﺞ"] = "ج",                 -- JIM: initial, middle, final form
+   ["ﺣ"] = "ح",  ["ﺤ"] = "ح",  ["ﺢ"] = "ح",                 -- HAH: initial, middle, final form
+   ["ﺧ"] = "خ",  ["ﺨ"] = "خ",  ["ﺦ"] = "خ",                 -- KHAH:initial, middle, final form
+   ["ﺩ"] = "د",  ["ﺪ"] = "د",                               -- DAL:  isolated & initial, middle & final form
+   ["ﺫ"] = "ذ",  ["ﺬ"] = "ذ",                               -- DHAL: isolated & initial, middle & final form
+   ["ﺭ"] = "ر",  ["ﺮ"] = "ر",                               -- RA:   isolated & initial, middle & final form
+   ["ﺯ"] = "ز",  ["ﺰ"] = "ز",                               -- ZAIN: isolated & initial, middle & final form
+   ["ﺳ"] = "س",  ["ﺴ"] = "س",  ["ﺲ"] = "س",                 -- SIN: initial, middle, final form
+   ["ﺷ"] = "ش",  ["ﺸ"] = "ش",  ["ﺶ"] = "ش",                 -- SHIN: initial, middle, final form
+   ["ﺻ"] = "ص",  ["ﺼ"] = "ص",  ["ﺺ"] = "ص",                 -- SAD: initial, middle, final form
+   ["ﺿ"] = "ض",  ["ﻀ"] = "ض",  ["ﺾ"] = "ض",                 -- DAD: initial, middle, final form
+   ["ﻃ"] = "ط",  ["ﻂ"] = "ط",                               -- TAH: initial, middle & final form
+   ["ﻇ"] = "ظ",  ["ﻈ"] = "ظ",  ["ﻆ"] = "ظ",                 -- ZAH: initial, middle, final form
+   ["ﻋ"] = "ع",  ["ﻌ"] = "ع",  ["ﻊ"] = "ع",                 -- AIN: initial, middle, final form
+   ["ﻏ"] = "غ",  ["ﻐ"] = "غ",  ["ﻎ"] = "غ",                 -- GHAIN: initial, middle, final form
+   ["ﻓ"] = "ف",  ["ﻔ"] = "ف",  ["ﻒ"] = "ف",                 -- FEH: initial, middle, final form
+   ["ﻗ"] = "ق",  ["ﻘ"] = "ق",  ["ﻖ"] = "ق",                 -- QAF: initial, middle, final form
+   ["ﻛ"] = "ك",  ["ﻜ"] = "ك",  ["ﻚ"] = "ك",                 -- KAF: initial, middle, final form
+   ["ﻟ"] = "ل",  ["ﻠ"] = "ل",  ["ﻞ"] = "ل",                 -- LAM: initial, middle, final form
+   ["ﻣ"] = "م",  ["ﻤ"] = "م",  ["ﻢ"] = "م",                 -- MIM: initial, middle, final form
+   ["ﻧ"] = "ن",  ["ﻨ"] = "ن",  ["ﻦ"] = "ن",                 -- NUN: initial, middle, final form
+   ["ﻳ"] = "ي",  ["ﻴ"] = "ي",  ["ﻲ"] = "ي",                 -- YA: initial, middle, final form
+   ["ﺉ"] = "ئ",  ["ﺋ"] = "ئ",  ["ﺌ"] = "ئ",  ["ﺊ"] = "ئ",   -- YEH WITH HAMZA ABOVE: isolated, initial, middle, final form
+   ["ﻯ"] = "ى",  ["ﻰ"] = "ى",                               -- ALEF MAKSURA: isolated & initial & middle, final form
+   ["ﻭ"] = "و",  ["ﻮ"] = "و",                               -- WAW: isolated & initial, middle & final form
+   ["ﺅ"] = "ؤ",  ["ﺆ"] = "ؤ",                               -- WAW WITH HAMZA ABOVE: isolated & initial, middle & final form
+   ["ﻩ"] = "ه",  ["ﻫ"] = "ه", ["ﻬ"] = "ه", ["ﻪ"] = "ه",     -- HAH: isolated, initial, middle, final form
+   ["ﺓ"] = "ة",  ["ﺔ"] = "ة",                               -- TAH: isolated & initial & middle, final form
+   ["ﻼ"] = "ﻻ",                                             -- LAM WITH ALEF: middle & final form
+   ["ﻶ"] = "ﻵ",                                             -- LAM WITH ALEF WITH MADDA: middle & final form
+   ["ﻸ"] = "لأ",                                             -- LAM WITH ALEF WITH HAMZA ABOVE: middle & final form
+   ["ﻺ"] = "لإ",                                             -- LAM WITH ALEF WITH HAMZA BELOW: middle & final form
+   ["ﺀ"] = "ء",                                             -- HAMZA: initial & middle & final form
+   ["ﻻ"] = "ل".."ا",  ["ﻼ"] = "ل".."ا",                     -- Arabic ligature LAM with ALEF: isolated & initial, middle & final form
+   ["ﻷ"] = "ل".."أ",  ["ﻸ"] = "ل".."أ",                     -- Arabic ligature LAM with ALEF with HAMZA above: isolated & initial, middle & final form
+   ["ﻹ"] = "ل".."إ",  ["ﻺ"] = "ل".."إ",                     -- Arabic ligature LAM with ALEF with HAMZA below: isolated & initial, middle & final form
+   ["ﻵ"] = "ل".."آ",  ["ﻶ"] = "ل".."آ",                     -- Arabic ligature LAM with ALEF with MADDA: isolated & initial, middle & final form
 
-   ["ﻻ"] = "ل".."ا",  ["ﻼ"] = "ل".."ا",  -- Arabic ligature LAM with ALEF: isolated & initial, middle & final form
-   ["ﻷ"] = "ل".."أ",  ["ﻸ"] = "ل".."أ",  -- Arabic ligature LAM with ALEF with HAMZA above: isolated & initial, middle & final form
-   ["ﻹ"] = "ل".."إ",  ["ﻺ"] = "ل".."إ",  -- Arabic ligature LAM with ALEF with HAMZA below: isolated & initial, middle & final form
-   ["ﻵ"] = "ل".."آ",  ["ﻶ"] = "ل".."آ",  -- Arabic ligature LAM with ALEF with MADDA: isolated & initial, middle & final form
-
-   };
+};
    
