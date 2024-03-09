@@ -205,12 +205,12 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
       local _fontC, _sizeC, _C = self:GetFont();   -- odczytaj aktualną czcionkę, rozmiar i typ
       self:SetFont(CH_Font, _sizeC, _C);           -- załaduj arabską czcionkę
       if (event == "CHAT_MSG_SAY") then
-         output = arg1..AS_UTF8reverse("يتحدث: ")..playerLink;   -- said (forma właściwa)
+         output = arg1..AS_UTF8reverse2(" يتحدث: ")..playerLink;   -- said (forma właściwa)
          local czystyArg = CH_Usun_Linki(arg1);
          tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
          CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
       elseif (event == "CHAT_MSG_YELL") then
-         output = arg1..AS_UTF8reverse("يصرخ: ")..playerLink;    -- yelled
+         output = arg1..AS_UTF8reverse2(" يصرخ: ")..playerLink;    -- yelled
          local czystyArg = CH_Usun_Linki(arg1);
          tinsert(CH_BubblesArray, { [1] = czystyArg, [2] = czystyArg, [3] = 1 });
          CH_ctrFrame:SetScript("OnUpdate", CH_bubblizeText);      -- obsługa bubbles dla komunikatu SAY
@@ -218,12 +218,12 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
          if (self:GetName() == "ChatFrame1") then        -- jest komunikat WHISPER w głównym oknie czatu
             return true;                      -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
          end
-         output = arg1..AS_UTF8reverse("همس: ")..playerLink;     -- whisped
+         output = arg1..AS_UTF8reverse2(" همس: ")..playerLink;     -- whisped
       elseif (event == "CHAT_MSG_WHISPER_INFORM") then   -- wysyłany szept do innego gracza
          if (self:GetName() == "ChatFrame1") then        -- jest komunikat WHISPER w głównym oknie czatu
             return true;                      -- nie wyświetlaj komunikatu WHISPER w głównym oknie czatu
          end
-         output = arg1.." :"..playerLink.." "..AS_UTF8reverse("إلى");    
+         output = arg1.." :"..playerLink.." "..AS_UTF8reverse2("إلى");    
       elseif ((event == "CHAT_MSG_PARTY") or (event == "CHAT_MSG_PARTY_LEADER")) then
          if (event == "CHAT_MSG_PARTY_LEADER") then
             if (Prat) then       -- jest aktywny dodatek Prat
@@ -503,7 +503,7 @@ local function CH_OnChar(self, character)    -- wprowadzono znak litery z klawia
                   newtext = newtext .. CH_BuforEditBox[i];
                end
             end
-            newtext = AS_UTF8reverse(newtext);     -- odwróć kolejność liter + ReShaping
+            newtext = AS_UTF8reverse2(newtext);     -- odwróć kolejność liter + ReShaping
          else
             for i = 1, CH_BuforLength do
                newtext = newtext .. CH_BuforEditBox[i];
@@ -626,7 +626,7 @@ local function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key: spradź cz
                newtext = newtext .. CH_BuforEditBox[i];
             end
          end
-         newtext = AS_UTF8reverse(newtext);       -- odwróć kolejność liter + ReShaping
+         newtext = AS_UTF8reverse2(newtext);       -- odwróć kolejność liter + ReShaping
          self:SetText(newtext);
       end
    end
@@ -824,7 +824,7 @@ local CHCheckButton1 = CreateFrame("CheckButton", "CHCheckButton1", CHOptions, "
 CHCheckButton1.CheckBox:SetScript("OnClick", function(self) if (CH_PM["active"]=="1") then CH_PM["active"]="0" else CH_PM["active"]="1" end; end);
 CHCheckButton1.CheckBox:SetPoint("TOPLEFT", CHOptionsHeader, "BOTTOMLEFT", 390, -40);    -- pozycja przycisku CheckBox
 CHCheckButton1:SetPoint("TOPRIGHT", CHOptionsHeader, "BOTTOMRIGHT", 125, -42);     -- pozycja opisu przycisku CheckBox
-CHCheckButton1.Text:SetText(AS_UTF8reverse(CH_Interface.active));     -- dodatek aktywny
+CHCheckButton1.Text:SetText(AS_UTF8reverse2(CH_Interface.active));     -- dodatek aktywny
 CHCheckButton1.Text:SetFont(CH_Font, 18);
 CHCheckButton1.Text:SetJustifyH("RIGHT");
 
@@ -835,13 +835,13 @@ CHOptionsMode:SetJustifyV("TOP");
 CHOptionsMode:ClearAllPoints();
 CHOptionsMode:SetPoint("TOPRIGHT", CHOptionsHeader, "BOTTOMRIGHT", -35, -95);
 CHOptionsMode:SetFont(CH_Font, 18);
-CHOptionsMode:SetText(":"..AS_UTF8reverse(CH_Interface.settings));          -- Ustawienia dodatku
+CHOptionsMode:SetText(":"..AS_UTF8reverse2(CH_Interface.settings));          -- Ustawienia dodatku
 
 local CHCheckSize = CreateFrame("CheckButton", "CHCheckSize", CHOptions, "SettingsCheckBoxControlTemplate");
 CHCheckSize.CheckBox:SetScript("OnClick", function(self) if (CH_PM["setsize"]=="1") then CH_PM["setsize"]="0" else CH_PM["setsize"]="1" end; end);
 CHCheckSize.CheckBox:SetPoint("TOPLEFT", CHOptionsMode, "BOTTOMRIGHT", -25, -20);
 CHCheckSize:SetPoint("TOPLEFT", CHOptionsMode, "BOTTOMRIGHT", -323, -22);
-CHCheckSize.Text:SetText(AS_UTF8reverse(CH_Interface.font_activ));   
+CHCheckSize.Text:SetText(AS_UTF8reverse2(CH_Interface.font_activ));   
 CHCheckSize.Text:SetFont(CH_Font, 18);
 CHCheckSize.Text:SetJustifyH("RIGHT");
 
@@ -851,7 +851,7 @@ CHslider1:SetMinMaxValues(10, 25);
 CHslider1.minValue, CHslider1.maxValue = CHslider1:GetMinMaxValues();
 CHslider1.Low:SetText(CHslider1.minValue);
 CHslider1.High:SetText(CHslider1.maxValue);
-getglobal(CHslider1:GetName() .. 'Text'):SetText(AS_UTF8reverse(CH_Interface.font_size));
+getglobal(CHslider1:GetName() .. 'Text'):SetText(AS_UTF8reverse2(CH_Interface.font_size));
 getglobal(CHslider1:GetName() .. 'Text'):SetFont(CH_Font, 16);
 getglobal(CHslider1:GetName() .. 'Text'):SetJustifyH("RIGHT");
 CHslider1:SetValue(tonumber(CH_PM["fontsize"]));
@@ -882,14 +882,14 @@ if (CH_PM["setsize"]=="1") then
 else
    CHOpis1:SetFont(CH_Font, 18);
 end
-CHOpis1:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
+CHOpis1:SetText(AS_UTF8reverse2("نموذج نص حجم الخط"));       -- przykładowy tekst
 CHOpis1:SetJustifyH("RIGHT");
 
 local select_opts = 
    {
    ['name'] = 'CHfontChoice',
    ['parent'] = CHOptions,
-   ['title'] = AS_UTF8reverse('ملف اختيار الخط العربي:'),
+   ['title'] = AS_UTF8reverse2('ملف اختيار الخط العربي:'),
    ['items']= {'Calibri.ttf', 'Arial.ttf', 'myfont.ttf' },   -- nazwy plików z czcionkami arabskimi do wyboru przez gracza
    ['defaultVal'] = CH_Selected_Font, 
    ['changeFunc'] = function(dropdown_frame, dropdown_val)
@@ -900,19 +900,19 @@ local select_opts =
       CHDateOfBase:SetFont(CH_Font, 16);
       CHDateOfBase:SetText("DragonArab ﺔﻴﺑﺮﻌﻟﺍ ﺔﻐﻠﻟﺍ ﻞﻴﻜﺸﺗ ﺭﻮﻄﻣ");
       CHCheckButton1.Text:SetFont(CH_Font, 18);
-      CHCheckButton1.Text:SetText(AS_UTF8reverse(CH_Interface.active));
-      CHOptionsMode:SetText(":"..AS_UTF8reverse(CH_Interface.settings));          -- Ustawienia dodatku
+      CHCheckButton1.Text:SetText(AS_UTF8reverse2(CH_Interface.active));
+      CHOptionsMode:SetText(":"..AS_UTF8reverse2(CH_Interface.settings));          -- Ustawienia dodatku
       CHOptionsMode:SetFont(CH_Font, 18);
       CHCheckSize.Text:SetFont(CH_Font, 18);
-      CHCheckSize.Text:SetText(AS_UTF8reverse(CH_Interface.font_activ));   
+      CHCheckSize.Text:SetText(AS_UTF8reverse2(CH_Interface.font_activ));   
       getglobal(CHslider1:GetName() .. 'Text'):SetFont(CH_Font, 16);
-      getglobal(CHslider1:GetName() .. 'Text'):SetText(AS_UTF8reverse(CH_Interface.font_size));
+      getglobal(CHslider1:GetName() .. 'Text'):SetText(AS_UTF8reverse2(CH_Interface.font_size));
       if (CH_PM["setsize"]=="1") then
          CHOpis1:SetFont(CH_Font, fontsize);
       else
          CHOpis1:SetFont(CH_Font, 18);
       end
-      CHOpis1:SetText(AS_UTF8reverse("نموذج نص حجم الخط"));       -- przykładowy tekst
+      CHOpis1:SetText(AS_UTF8reverse2("نموذج نص حجم الخط"));       -- przykładowy tekst
       end
    }
 local CHselectDD = CH_createDropdown(select_opts);    -- rozwijane w dół menu wyboru czcionki arabskiej
