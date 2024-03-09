@@ -8,7 +8,7 @@ local debug_show_form = 0;
 -- define a table of reshaping rules for Arabic characters
 AS_Reshaping_Rules = {
    ["\216\167"] = { isolated = "\216\167", initial = "\216\167", middle = "\239\186\142", final = "\239\186\142" },                 -- ALEF
-   ["\239\186\129"] = { isolated = "\239\186\129", initial = "\239\186\129", middle = "\239\186\130", final = "\239\186\130" },     -- ALEF WITH MADDA ABOVE
+   ["\216\162"] = { isolated = "\239\186\129", initial = "\239\186\129", middle = "\239\186\142", final = "\239\186\142" },         -- ALEF WITH MADDA ABOVE
    ["\216\163"] = { isolated = "\216\163", initial = "\216\163", middle = "\239\186\132", final = "\239\186\132" },                 -- ALEF WITH HAMZA ABOVE
    ["\216\165"] = { isolated = "\216\165", initial = "\216\165", middle = "\239\186\136", final = "\239\186\136" },                 -- ALEF WITH HAMZA BELOW
    ["\216\168"] = { isolated = "\216\168", initial = "\239\186\145", middle = "\239\186\146", final = "\239\186\144" },             -- BEH
@@ -46,7 +46,7 @@ AS_Reshaping_Rules = {
    ["\239\187\181"] = { isolated = "\239\187\181", initial = "\239\187\181", middle = "\239\187\182", final = "\239\187\182" },     -- LAM WITH ALEF WITH MADDA
    ["\217\132\216\163"] = { isolated = "\239\187\183", initial = "\239\187\183", middle = "\239\187\184", final = "\239\187\184" }, -- LAM WITH ALEF WITH HAMZA ABOVE
    ["\217\132\216\165"] = { isolated = "\239\187\185", initial = "\239\187\185", middle = "\239\187\186", final = "\239\187\186" }, -- LAM WITH ALEF WITH HAMZA BELOW
-   ["\216\161"] = { isolated = "\216\161", initial = "\239\186\128", middle = "\239\186\128", final = "\239\186\128" },             -- HAMZA
+   ["\216\161"] = { isolated = "\216\161", initial = "\216\161", middle = "\216\161", final = "\216\161" },                         -- HAMZA
 };
 
 AS_Reshaping_Rules2 = {
@@ -54,12 +54,14 @@ AS_Reshaping_Rules2 = {
    ["\217\132" .. "\216\163"] = { isolated = "\239\187\183", initial = "\239\187\183", middle = "\239\187\184", final = "\239\187\184" }, -- Arabic ligature LAM with ALEF with HAMZA above
    ["\217\132" .. "\216\165"] = { isolated = "\239\187\185", initial = "\239\187\185", middle = "\239\187\186", final = "\239\187\186" }, -- Arabic ligature LAM with ALEF with HAMZA below
    ["\217\132" .. "\216\162"] = { isolated = "\239\187\181", initial = "\239\187\181", middle = "\239\187\182", final = "\239\187\182" }, -- Arabic ligature LAM with ALEF with MADDA
-   --Test
-   --["إ".."ع"] = {isolated = "0",    initial="ﻋإ",  middle="ﻋﺈ",   final="3"},           -- Arabic ligature ALEF with Hamaz below + AIN Middle
-   --["ء".."و"] = {isolated = "وء",   initial="وء",  middle="وء",   final="وء"},
-   ["ي" .. "ء"] = { isolated = "0", initial = "1", middle = "ءﻲ", final = "3" },
+   ["ي" .. "ء"] = { isolated = "0", initial = "ءي", middle = "ءﻲ", final = "ءﻲ" },
 };
 
+-------------------------------------------------------------------------------------------------------
+-- AS_Reshaping_Rules3 is a table that contains reshaping rules for Arabic characters.
+-- Each key-value pair represents a reshaping rule for a specific character or character range.
+-- The keys are character ranges, and the values are tables with properties for different forms of the character.
+-------------------------------------------------------------------------------------------------------
 AS_Reshaping_Rules3 = {
    --["ا".."ل".."آ"] = {isolated = "ﻵا",  initial="ﻵا", middle="ﻵا", final="ﻶا"},        -- Arabic ligature ALEF+LAM+(ALEF with MADA)
 };
@@ -254,7 +256,7 @@ end
 -------------------------------------------------------------------------------------------------------
 
 -- Reverses the order of UTF-8 letters with ReShaping
-function AS_UTF8reverse(s)
+function AS_UTF8reverse2(s)
    local newstr = "";
    if (s) then -- check if argument is not empty (nil)
       local bytes = strlen(s);
@@ -264,7 +266,7 @@ function AS_UTF8reverse(s)
       local charbytes1, charbytes2, charbytes3;
       local position = -1; -- not specified
       local nextletter = 0;
-      local spaces = '( )?؟!,.;:،"'; -- letters that we treat as a space
+      local spaces = '.@_={}~`^&*[]+/%<>( )?$#%؟!,;:،|\"-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'; -- letters that we treat as a space
 
       while (pos <= bytes) do
          charbytes1 = AS_UTF8charbytes(s, pos);        -- count of bytes (liczba bajtów znaku)
@@ -525,11 +527,11 @@ function AS_ReverseAndPrepareLineText(Atext, Awidth, AfontSize)
          if (link_start_stop == false) then -- nie jesteśmy wewnątrz linku - można sprawdzać
             AS_TestLine:SetWidth(Awidth);   -- set the frame width to the text
             AS_TestLine.text:SetFont(QTR_Font2, AfontSize);
-            AS_TestLine.text:SetText(AS_UTF8reverse(newstr));
+            AS_TestLine.text:SetText(AS_UTF8reverse2(newstr));
             if ((char1 == '#') or (AS_TestLine.text:GetHeight() > AfontSize * 1.5)) then -- tekst nie mieści się już w 1 linii
                newstr = string.sub(newstr, 1, strlen(newstr) - last_space);              -- tekst do ostatniej spacji
                newstr = string.gsub(newstr, "#", "");
-               retstr = retstr .. AS_AddSpaces(AS_UTF8reverse(newstr), Awidth, AfontSize) .. "\n";
+               retstr = retstr .. AS_AddSpaces(AS_UTF8reverse2(newstr), Awidth, AfontSize) .. "\n";
                newstr = nextstr;
                nextstr = "";
                counter = 0;
@@ -538,7 +540,7 @@ function AS_ReverseAndPrepareLineText(Atext, Awidth, AfontSize)
          char2 = char1; -- zapamiętaj znak, potrzebne w następnej pętli
          pos = pos + charbytes;
       end
-      retstr = retstr .. AS_AddSpaces(AS_UTF8reverse(newstr), Awidth, AfontSize);
+      retstr = retstr .. AS_AddSpaces(AS_UTF8reverse2(newstr), Awidth, AfontSize);
       retstr = string.gsub(retstr, "#", "");
       retstr = string.gsub(retstr, " \n", "\n"); -- space before newline code is useless
       retstr = string.gsub(retstr, "\n ", "\n"); -- space after newline code is useless
