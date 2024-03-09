@@ -1,4 +1,4 @@
-﻿-- Addon: WoWinArabic-Chat (version: 10.20.01) 2023.12.18
+﻿-- Addon: WoWAR_Chat (version: 10.20.01) 2023.12.18
 -- Note: The addon supports chat for entering and displaying messages in Arabic.
 -- Autor: Platine  (e-mail: platine.wow@gmail.com)
 -- Contributor: DragonArab - Developed letter reshaping tables and ligatures (http://WoWinArabic.com)
@@ -6,8 +6,8 @@
 
 local CH_on_debug = false;
 -- General Variables
-local CH_version = GetAddOnMetadata("WoWinArabic_Chat", "Version");
-local CH_ctrFrame = CreateFrame("FRAME", "WoWinArabic-Chat");
+local CH_version = GetAddOnMetadata("WoWAR_Chat", "Version");
+local CH_ctrFrame = CreateFrame("FRAME", "WoWAR_Chat");
 local CH_ED_mode = 0;           -- włączony tryb arabski, wyrównanie do prawej strony
 local CH_ED_cursor_move = 0;    -- tryb przesuwania kursora po wpisaniu litery (0-w prawo, 1-w lewo)
 local CH_BubblesArray = {};
@@ -24,7 +24,7 @@ local CH_highlight_text = false;
 local CH_BSize = 14;            -- default size of chat bubbles
 
 -- fonty z arabskimi znakami
-local CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\calibri.ttf";
+local CH_Font = "Interface\\AddOns\\WoWAR_Chat\\Fonts\\calibri.ttf";
 
 -- user interface in addon options
 local CH_Interface = {   
@@ -56,7 +56,7 @@ local function CH_bubblizeText()
                   for idx, iArray in ipairs(CH_BubblesArray) do      -- sprawdź, czy dane są właściwe (tekst oryg. się zgadza z zapisaną w tablicy)
                      if (region and not region:GetName() and region:IsVisible() and region.GetText and (region:GetText() == iArray[1])) then
                         local newText = iArray[2];   -- text received
-                        local okrWidth = AS_UTF8len(newText);
+                        local okrWidth = AS_UTF8len2(newText);
                         region:SetFont(CH_Font, act_font);     -- ustaw arabską czcionkę oraz wielkość
                         if ((okrWidth >= limit_chars2) or (region:GetHeight() > act_font*3)) then    -- 3 lines or more
                            region:SetJustifyH("RIGHT");              -- wyrównanie do prawej strony (domyślnie jest CENTER)
@@ -131,7 +131,7 @@ local function CH_Check_Arabic_Letters(txt)
       local char0 = '';
       local charbytes0;
       while (pos <= bytes) do
-         charbytes0 = AS_UTF8charbytes(txt, pos);         -- count of bytes (liczba bajtów znaku)
+         charbytes0 = AS_UTF8charbytes2(txt, pos);         -- count of bytes (liczba bajtów znaku)
          char0 = strsub(txt, pos, pos + charbytes0 - 1);  -- current character
 			pos = pos + charbytes0;
          if (char0 >= "؀") then      -- it is an arabic letter
@@ -194,7 +194,7 @@ local function CH_ChatFilter(self, event, arg1, arg2, arg3, _, arg5, ...)
       local poz = string.find(arg2, "-");
       local output = "";
       local playerLink;
-      local playerLen = AS_UTF8len(string.sub(arg2, 1, poz-1));
+      local playerLen = AS_UTF8len2(string.sub(arg2, 1, poz-1));
       local _, className = UnitClass(string.sub(arg2, 1, poz-1)); 
       local classColorTable = RAID_CLASS_COLORS[className];
       if (classColorTable) then
@@ -385,10 +385,10 @@ local function CH_GetIsolatedLetterForm(ch)
    local retu = ch;
    if (CH_IsolatedLetter[ch]) then
       retu = CH_IsolatedLetter[ch];
-      if (AS_UTF8len(retu) > 1) then   -- mamy 2 litery arabskie w formie izolowanej
+      if (AS_UTF8len2(retu) > 1) then   -- mamy 2 litery arabskie w formie izolowanej
          CH_BuforLength = CH_BuforLength + 1;
-         CH_BuforEditBox[CH_BuforLength] = AS_UTF8sub(retu,1,1);
-         retu = AS_UTF8sub(retu,2,2);
+         CH_BuforEditBox[CH_BuforLength] = AS_UTF8sub2(retu,1,1);
+         retu = AS_UTF8sub2(retu,2,2);
       end
    end
    return retu;
@@ -406,11 +406,11 @@ local function CH_Insert_Text_to_Buffer(s)
    local is_link = false;
    local newstr = "";
    while (pos <= bytes) do
-      charbytes1 = AS_UTF8charbytes(s, pos);         -- count of bytes (liczba bajtów znaku)
+      charbytes1 = AS_UTF8charbytes2(s, pos);         -- count of bytes (liczba bajtów znaku)
       char1 = strsub(s, pos, pos + charbytes1 - 1);  -- current character
       pos = pos + charbytes1;
       if (pos <= bytes) then
-         charbytes2 = AS_UTF8charbytes(s, pos);         -- count of bytes (liczba bajtów znaku)
+         charbytes2 = AS_UTF8charbytes2(s, pos);         -- count of bytes (liczba bajtów znaku)
          char2 = strsub(s, pos, pos + charbytes2 - 1);  -- next character
       else
          char2 = "";
@@ -463,7 +463,7 @@ local function CH_OnChar(self, character)    -- wprowadzono znak litery z klawia
             CH_InsertButton:SetText("←");
             CH_InsertButton:Show();
          else
-            self:SetCursorPosition(AS_UTF8charbytes(character));
+            self:SetCursorPosition(AS_UTF8charbytes2(character));
             CH_ED_cursor_move = 0;              -- włącz przesuwanie w prawo
             if (CH_ED_mode == 1) then
                CH_InsertButton:SetText("→");
@@ -483,7 +483,7 @@ local function CH_OnChar(self, character)    -- wprowadzono znak litery z klawia
             tinsert(CH_BuforEditBox, CH_BuforCursor, character);
          end
          local spaces = "( )?؟!,.;:،";             -- letters that we treat as a space
-         if (AS_UTF8find(spaces, character) == false) then       -- nie wprowadzono znaku z listy spaces      
+         if (AS_UTF8find2(spaces, character) == false) then       -- nie wprowadzono znaku z listy spaces      
             if (((character >= "؀") and (character <= "ݿ")) or ((string.sub(character,1,1) == "|") and (CH_ED_mode == 1))) then  -- mamy literę arabską
                if (CH_ED_cursor_move == 0) then    -- mamy tryb przesuwania w prawo - przełącz na tryb przesuwania w lewo od wpisanego znaku
                   CH_INS_ON_OFF();                 -- zmień na przesuwanie w lewo
@@ -537,7 +537,7 @@ local function CH_OnKeyDown(self, key)    -- wciśnięto klawisz key: spradź cz
             local pos = self:GetCursorPosition();    -- aktualna pozycja kursora
             if (strlen(buf) > 0) then                -- nie jest to pusty tekst
                if (pos < strlen(buf)) then           -- kursor nie jest na początku tekstu, skrajnie na prawo
-                  local charbytes = AS_UTF8charbytes(buf, pos+1);   -- liczba bajtów 1 znaku w pozycji pos
+                  local charbytes = AS_UTF8charbytes2(buf, pos+1);   -- liczba bajtów 1 znaku w pozycji pos
                   self:SetCursorPosition(pos+charbytes);    -- przesuń kursor o 1 znak w prawo, aby usunięcie było tego znaku
                else                                         -- nic nie usuwaj, jesteś na początku tekstu, skrajnie na prawo
                   self:SetText(buf.." ");                   -- dodaj spację na początku, skrajnie na prawo
@@ -799,7 +799,7 @@ local function CH_BlizzardOptions()
 -- Create main frame for information text
 local CHOptions = CreateFrame("FRAME", "WoWinArabicChatOptions");
 CHOptions.refresh = function (self) CH_SetCheckButtonState() end;
-CHOptions.name = "WoWinArabic-Chat";
+CHOptions.name = "WoWAR_Chat";
 InterfaceOptions_AddCategory(CHOptions);
 
 local CHOptionsHeader = CHOptions:CreateFontString(nil, "ARTWORK");
@@ -808,7 +808,7 @@ CHOptionsHeader:SetJustifyH("LEFT");
 CHOptionsHeader:SetJustifyV("TOP");
 CHOptionsHeader:ClearAllPoints();
 CHOptionsHeader:SetPoint("TOPLEFT", 180, -16);
-CHOptionsHeader:SetText("2023 ﺔﻨﺴﻟ Platine ﺭﻮﻄﻤﻟﺍ "..CH_version.." ﺔﺨﺴﻧ WoWinArabic-Chat ﺔﻓﺎﺿﺇ");
+CHOptionsHeader:SetText("2023 ﺔﻨﺴﻟ Platine ﺭﻮﻄﻤﻟﺍ "..CH_version.." ﺔﺨﺴﻧ WoWAR_Chat ﺔﻓﺎﺿﺇ");
 CHOptionsHeader:SetFont(CH_Font, 16);
 
 local CHDateOfBase = CHOptions:CreateFontString(nil, "ARTWORK");
@@ -894,9 +894,9 @@ local select_opts =
    ['defaultVal'] = CH_Selected_Font, 
    ['changeFunc'] = function(dropdown_frame, dropdown_val)
       CH_PM["fontname"] = dropdown_val;
-      CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\" .. CH_PM["fontname"];
+      CH_Font = "Interface\\AddOns\\WoWAR_Chat\\Fonts\\" .. CH_PM["fontname"];
       CHOptionsHeader:SetFont(CH_Font, 16);
-      CHOptionsHeader:SetText("2023 ﺔﻨﺴﻟ Platine ﺭﻮﻄﻤﻟﺍ "..CH_version.." ﺔﺨﺴﻧ WoWinArabic-Chat ﺔﻓﺎﺿﺇ");
+      CHOptionsHeader:SetText("2023 ﺔﻨﺴﻟ Platine ﺭﻮﻄﻤﻟﺍ "..CH_version.." ﺔﺨﺴﻧ WoWAR_Chat ﺔﻓﺎﺿﺇ");
       CHDateOfBase:SetFont(CH_Font, 16);
       CHDateOfBase:SetText("DragonArab ﺔﻴﺑﺮﻌﻟﺍ ﺔﻐﻠﻟﺍ ﻞﻴﻜﺸﺗ ﺭﻮﻄﻣ");
       CHCheckButton1.Text:SetFont(CH_Font, 18);
@@ -966,12 +966,12 @@ local function CH_SlashCommand(msg)
      local CH_command = string.lower(msg);                -- normalizacja, tylko małe litery
      if ((CH_command=="on") or (CH_command=="1")) then    -- włącz przełącznik aktywności
         CH_PM["active"]="1";
-        DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat is active now");
+        DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWAR_Chat is active now");
      elseif ((CH_command=="off") or (CH_command=="0")) then
         CH_PM["active"]="0";
-        DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat is inactive now");
+        DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWAR_Chat is inactive now");
      else
-        Settings.OpenToCategory("WoWinArabic-Chat");
+        Settings.OpenToCategory("WoWAR_Chat");
      end   
   end
 end
@@ -979,7 +979,7 @@ end
 -------------------------------------------------------------------------------------------------------
 
 local function CH_OnEvent(self, event, name, ...)
-   if (event=="ADDON_LOADED" and name=="WoWinArabic_Chat") then
+   if (event=="ADDON_LOADED" and name=="WoWAR_Chat") then
       CH_Frame:UnregisterEvent("ADDON_LOADED");
       local _fontC, _sizeC, _C = DEFAULT_CHAT_FRAME:GetFont(); -- odczytaj aktualną czcionkę, rozmiar i typ
       DEFAULT_CHAT_FRAME:SetFont(CH_Font, _sizeC, _C);
@@ -1048,13 +1048,13 @@ local function CH_OnEvent(self, event, name, ...)
       ChatFrame_AddMessageEventFilter("CHAT_MSG_BATTLEGROUND", CH_ChatFilter);
       ChatFrame_AddMessageEventFilter("CHAT_MSG_BATTLEGROUND_LEADER", CH_ChatFilter);
       
-      SlashCmdList["WOWINARABIC_CHAT"] = function(msg) CH_SlashCommand(msg); end
-      SLASH_WOWINARABIC_CHAT1 = "/wowinarabic-chat";
-      SLASH_WOWINARABIC_CHAT2 = "/archat";
+      SlashCmdList["WoWAR_Chat"] = function(msg) CH_SlashCommand(msg); end
+      SLASH_WoWAR_Chat1 = "/WoWARChat";
+      SLASH_WoWAR_Chat2 = "/archat";
       CH_CheckVars();
       CH_BlizzardOptions();
-      CH_Font = "Interface\\AddOns\\WoWinArabic_Chat\\Fonts\\" .. CH_PM["fontname"];
-      DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWinArabic-Chat ver. "..CH_version.." - "..CH_Interface.started);
+      CH_Font = "Interface\\AddOns\\WoWAR_Chat\\Fonts\\" .. CH_PM["fontname"];
+      DEFAULT_CHAT_FRAME:AddMessage("|cffffff00WoWAR_Chat ver. "..CH_version.." - "..CH_Interface.started);
       CH_Frame.ADDON_LOADED = nil;
    end
 end
@@ -1121,7 +1121,7 @@ function CH_LineChat(txt, font_size)
             c = strbyte(txt, pos);
          end
       
-         charbytes = AS_UTF8charbytes(txt, pos);
+         charbytes = AS_UTF8charbytes2(txt, pos);
          char1 = strsub(txt, pos, pos + charbytes - 1);
 
 			newstr = char1 .. newstr;        -- sprawdzamy znaki od ostatnich
@@ -1147,7 +1147,7 @@ function CH_LineChat(txt, font_size)
             end
             CH_TestLine.text:SetText(newstr);
             if (CH_TestLine.text:GetHeight() > font_size*1.5) then   -- tekst nie mieści się już w 1 linii
-               newstr = AS_UTF8sub(newstr, last_space+1);            -- tekst od ostatniej spacji
+               newstr = AS_UTF8sub2(newstr, last_space+1);            -- tekst od ostatniej spacji
                newstrR = CH_AddSpaces(newstr, second);
                retstr = retstr .. newstrR .. "\n";
                newstr = nextstr;
@@ -1214,7 +1214,7 @@ function CH_UTF8reverse(s)
       local charbytes1;
 
       while (pos <= bytes) do
-         charbytes1 = AS_UTF8charbytes(s, pos);         -- count of bytes (liczba bajtów znaku)
+         charbytes1 = AS_UTF8charbytes2(s, pos);         -- count of bytes (liczba bajtów znaku)
          char1 = strsub(s, pos, pos + charbytes1 - 1);  -- current character
 			pos = pos + charbytes1;
          newstr = char1 .. newstr;
@@ -1248,10 +1248,10 @@ function CH_SpecifyBubbleWidth(str_txt, reg)
       end   
       CH_TestLine:Hide();     -- the frame is invisible in the game
       CH_TestLine.text:SetFont(_fontR, _sizeR, _R);
-      local newTextWidth = (0.35*act_font+0.8)*AS_UTF8len(v)*1.5;  -- maksymalna szerokość okna dymku
+      local newTextWidth = (0.35*act_font+0.8)*AS_UTF8len2(v)*1.5;  -- maksymalna szerokość okna dymku
       CH_TestLine.text:SetWidth(newTextWidth);
       CH_TestLine.text:SetText(v);
-      local minTextWidth = (0.35*act_font+0.8)*AS_UTF8len(v)*0.8;  -- minimalna szerokość ograniczająca pętlę
+      local minTextWidth = (0.35*act_font+0.8)*AS_UTF8len2(v)*0.8;  -- minimalna szerokość ograniczająca pętlę
       
       while ((CH_TestLine.text:GetHeight() < _sizeR*1.5) and (minTextWidth < newTextWidth)) do
          newTextWidth = newTextWidth - 5;
@@ -1271,7 +1271,7 @@ function CH_LineReverse(s, limit)
    local retstr = "";
    if (s and limit) then                           -- check if arguments are not empty (nil)
 		local bytes = strlen(s);
-      local count_chars = AS_UTF8len(s);           -- number of characters in a string s
+      local count_chars = AS_UTF8len2(s);           -- number of characters in a string s
       local limit_chars = count_chars / limit;     -- limit characters on one line (+-)
 		local pos = bytes;
 		local charbytes;
@@ -1284,7 +1284,7 @@ function CH_LineReverse(s, limit)
             pos = pos - 1;                         -- cofnij się na początek litery UTF-8
             c = strbyte(s, pos);
          end
-			charbytes = AS_UTF8charbytes(s, pos);    -- count of bytes (liczba bajtów znaku)
+			charbytes = AS_UTF8charbytes2(s, pos);    -- count of bytes (liczba bajtów znaku)
          char1 = strsub(s, pos, pos + charbytes - 1);
 			newstr = char1 .. newstr;
          

@@ -1,0 +1,21 @@
+﻿## Interface: 100205
+## X-Min-Interface: 100205
+## X-Min-Interface-Classic: 11404
+## X-Min-Interface-BCC: 20504
+## X-Min-Interface-Wrath: 30403
+## X-Min-Interface-Cataclysm: 40000
+
+## Version: 0.0.1
+## Title: WoWAR|cFF34C8FF-|r|cFFFF4500Chat|r
+## IconTexture: Interface\AddOns\WoWAR_Chat\Img\wowar.blp
+## Notes: Support Arabic Text in Chat.
+## Author: Platine,DragonArab
+## eMail: Dragonarab@gmail.com
+## X-Website: https://wowinarabic.com
+## DefaultState: Enabled
+## LoadOnDemand: 0
+
+## SavedVariables: CH_PM
+
+WoWAR_ARLib.lua
+WoWAR_Chat.lua

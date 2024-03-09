@@ -6,7 +6,7 @@
 local debug_show_form = 0;
 
 -- define a table of reshaping rules for Arabic characters
-AS_Reshaping_Rules = {
+AS_Reshaping_RulesC = {
    ["\216\167"] = { isolated = "\216\167", initial = "\216\167", middle = "\239\186\142", final = "\239\186\142" },                 -- ALEF
    ["\216\162"] = { isolated = "\239\186\129", initial = "\239\186\129", middle = "\239\186\142", final = "\239\186\142" },         -- ALEF WITH MADDA ABOVE
    ["\216\163"] = { isolated = "\216\163", initial = "\216\163", middle = "\239\186\132", final = "\239\186\132" },                 -- ALEF WITH HAMZA ABOVE
@@ -49,7 +49,7 @@ AS_Reshaping_Rules = {
    ["\216\161"] = { isolated = "\216\161", initial = "\216\161", middle = "\216\161", final = "\216\161" },                         -- HAMZA
 };
 
-AS_Reshaping_Rules2 = {
+AS_Reshaping_RulesC2 = {
    ["\217\132" .. "\216\167"] = { isolated = "\239\187\187", initial = "\239\187\187", middle = "\239\187\188", final = "\239\187\188" }, -- Arabic ligature LAM with ALEF
    ["\217\132" .. "\216\163"] = { isolated = "\239\187\183", initial = "\239\187\183", middle = "\239\187\184", final = "\239\187\184" }, -- Arabic ligature LAM with ALEF with HAMZA above
    ["\217\132" .. "\216\165"] = { isolated = "\239\187\185", initial = "\239\187\185", middle = "\239\187\186", final = "\239\187\186" }, -- Arabic ligature LAM with ALEF with HAMZA below
@@ -58,24 +58,24 @@ AS_Reshaping_Rules2 = {
 };
 
 -------------------------------------------------------------------------------------------------------
--- AS_Reshaping_Rules3 is a table that contains reshaping rules for Arabic characters.
+-- AS_Reshaping_RulesC3 is a table that contains reshaping rules for Arabic characters.
 -- Each key-value pair represents a reshaping rule for a specific character or character range.
 -- The keys are character ranges, and the values are tables with properties for different forms of the character.
 -------------------------------------------------------------------------------------------------------
-AS_Reshaping_Rules3 = {
+AS_Reshaping_RulesC3 = {
    --["ا".."ل".."آ"] = {isolated = "ﻵا",  initial="ﻵا", middle="ﻵا", final="ﻶا"},        -- Arabic ligature ALEF+LAM+(ALEF with MADA)
 };
 
 -------------------------------------------------------------------------------------------------------
 
 -- returns the number of bytes used by the UTF-8 character at byte
-function AS_UTF8charbytes(s, i)
+function AS_UTF8charbytes2(s, i)
    -- argument defaults
    i = i or 1;
 
    -- argument checking
    if (type(s) ~= "string") then
-      error("bad argument #1 to 'AS_UTF8charbytes' (string expected, got " .. type(s) .. ")");
+      error("bad argument #1 to 'AS_UTF8charbytes2' (string expected, got " .. type(s) .. ")");
    end
    if (type(i) ~= "number") then
       error("bad argument #2 to 'QTR_UFT8charbytes' (number expected, got " .. type(i) .. ")");
@@ -164,14 +164,14 @@ end
 -------------------------------------------------------------------------------------------------------
 
 -- returns the number of characters in a UTF-8 string
-function AS_UTF8len(s)
+function AS_UTF8len2(s)
    local len = 0;
    if (s) then -- argument checking
       local pos = 1;
       local bytes = strlen(s);
       while (pos <= bytes) do
          len = len + 1;
-         pos = pos + AS_UTF8charbytes(s, pos);
+         pos = pos + AS_UTF8charbytes2(s, pos);
       end
    end
    return len;
@@ -180,7 +180,7 @@ end
 -------------------------------------------------------------------------------------------------------
 
 -- function finding character c in the string s and return true or false
-function AS_UTF8find(s, c)
+function AS_UTF8find2(s, c)
    local odp = false;
    if (s and c) then           -- check if arguments are not empty (nil)
       local pos = 1;
@@ -189,12 +189,12 @@ function AS_UTF8find(s, c)
       local char1;
 
       while (pos <= bytes) do
-         charbytes = AS_UTF8charbytes(s, pos);        -- count of bytes of the character
+         charbytes = AS_UTF8charbytes2(s, pos);        -- count of bytes of the character
          char1 = strsub(s, pos, pos + charbytes - 1); -- current character from the string s
          if (char1 == c) then
             odp = true;
          end
-         pos = pos + AS_UTF8charbytes(s, pos);
+         pos = pos + AS_UTF8charbytes2(s, pos);
       end
    end
    return odp;
@@ -204,18 +204,18 @@ end
 
 -- functions identically to string.sub except that i and j are UTF-8 characters
 -- instead of bytes
-function AS_UTF8sub(s, i, j)
+function AS_UTF8sub2(s, i, j)
    j = j or -1; -- argument defaults, is not required
 
    -- argument checking
    if (type(s) ~= "string") then
-      error("bad argument #1 to 'AS_UTF8sub' (string expected, got " .. type(s) .. ")");
+      error("bad argument #1 to 'AS_UTF8sub2' (string expected, got " .. type(s) .. ")");
    end
    if (type(i) ~= "number") then
-      error("bad argument #2 to 'AS_UTF8sub' (number expected, got " .. type(i) .. ")");
+      error("bad argument #2 to 'AS_UTF8sub2' (number expected, got " .. type(i) .. ")");
    end
    if (type(j) ~= "number") then
-      error("bad argument #3 to 'AS_UTF8sub' (number expected, got " .. type(j) .. ")");
+      error("bad argument #3 to 'AS_UTF8sub2' (number expected, got " .. type(j) .. ")");
    end
 
    local pos       = 1;
@@ -223,7 +223,7 @@ function AS_UTF8sub(s, i, j)
    local len       = 0;
 
    -- only set l if i or j is negative
-   local l         = (i >= 0 and j >= 0) or AS_UTF8len(s);
+   local l         = (i >= 0 and j >= 0) or AS_UTF8len2(s);
    local startChar = (i >= 0) and i or l + i + 1;
    local endChar   = (j >= 0) and j or l + j + 1;
 
@@ -242,7 +242,7 @@ function AS_UTF8sub(s, i, j)
          startByte = pos;
       end
 
-      pos = pos + AS_UTF8charbytes(s, pos);
+      pos = pos + AS_UTF8charbytes2(s, pos);
 
       if (len == endChar) then
          endByte = pos - 1;
@@ -269,22 +269,22 @@ function AS_UTF8reverse2(s)
       local spaces = '.@_={}~`^&*[]+/%<>( )?$#%؟!,;:،|\"-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'; -- letters that we treat as a space
 
       while (pos <= bytes) do
-         charbytes1 = AS_UTF8charbytes(s, pos);        -- count of bytes (liczba bajtów znaku)
+         charbytes1 = AS_UTF8charbytes2(s, pos);        -- count of bytes (liczba bajtów znaku)
          char1 = strsub(s, pos, pos + charbytes1 - 1); -- current character
          pos = pos + charbytes1;
 
          if (pos <= bytes) then
-            charbytes2 = AS_UTF8charbytes(s, pos);                                     -- count of bytes (liczba bajtów znaku)
+            charbytes2 = AS_UTF8charbytes2(s, pos);                                     -- count of bytes (liczba bajtów znaku)
             char2 = strsub(s, pos, pos + charbytes2 - 1);                              -- next character
             if (pos + charbytes2 <= bytes) then                                        -- 3rd next letter is available
-               charbytes3 = AS_UTF8charbytes(s, pos + charbytes2);                     -- count of bytes (liczba bajtów znaku)
+               charbytes3 = AS_UTF8charbytes2(s, pos + charbytes2);                     -- count of bytes (liczba bajtów znaku)
                char3 = strsub(s, pos + charbytes2, pos + charbytes2 + charbytes3 - 1); -- 3rd next character
             else
                charbytes3 = 0;
                char3 = 'X';
             end
 
-            if (AS_UTF8find(spaces, char2)) then
+            if (AS_UTF8find2(spaces, char2)) then
                nextletter = 1; -- space, question mark, exclamation mark, comma, dot, etc.
             else
                nextletter = 2; -- normal letter
@@ -298,7 +298,7 @@ function AS_UTF8reverse2(s)
          end
 
          -- first determine the original position of the letter in the word
-         if (AS_UTF8find(spaces, char1)) then
+         if (AS_UTF8find2(spaces, char1)) then
             position = -1;                                                   -- space, question mark, exclamation mark, comma, dot, etc.
          elseif (position < 0) then                                          -- not specified yet (start the word)
             if ((nextletter == 0) or (nextletter == 1)) then                 -- end of file or space on as a next letter
@@ -327,7 +327,7 @@ function AS_UTF8reverse2(s)
                 (char0 == "\239\187\185") or (char0 == "\239\187\181") or (char0 == "\239\187\181\216\167") or
                 (char0 == "\239\187\183\216\167") or (char0 == "\239\187\185\216\167") or (char0 == "\239\187\187\216\167") or
                 (char0 == "\217\132" and char1 == "\216\167") or (char0 == "\239\187\187")) then -- previous letter was ALEF, DA, THA, RA, ZAI, WA or LA, current should be in isolated form, only if this letter is the last in the word, otherwise form must be initial
-            if (AS_UTF8find(spaces, char1)) then                                                 -- current character is space
+            if (AS_UTF8find2(spaces, char1)) then                                                 -- current character is space
                position = 0;                                                                     -- isolated letter
             elseif ((nextletter == 0) or (nextletter == 1)) then                                 -- end of file or space on as a next letter OR letter is ALEF
                position = 0;                                                                     -- isolated letter
@@ -342,7 +342,7 @@ function AS_UTF8reverse2(s)
             end
          elseif (char0 == "\216\175") or (char0 == "\216\176") or (char0 == "\216\177") or
              (char0 == "\216\178") or (char0 == "\217\136") or (char0 == "\216\164") then
-            if (AS_UTF8find(spaces, char1)) then                 -- current character is space
+            if (AS_UTF8find2(spaces, char1)) then                 -- current character is space
                position = 0;                                     -- isolated letter
             elseif ((nextletter == 0) or (nextletter == 1)) then -- next character is space
                position = 0;                                     -- isolated letter
@@ -357,7 +357,7 @@ function AS_UTF8reverse2(s)
             elseif nextletter == 1 then -- If next character is a space
                -- Check the character after the space
                if pos + charbytes2 <= bytes then
-                  local nextCharBytes = AS_UTF8charbytes(s, pos + charbytes2)
+                  local nextCharBytes = AS_UTF8charbytes2(s, pos + charbytes2)
                   local nextChar = strsub(s, pos + charbytes2, pos + charbytes2 + nextCharBytes - 1)
 
                   -- Regardless of the nature of the next character, set to isolated form
@@ -372,8 +372,8 @@ function AS_UTF8reverse2(s)
          end
 
 
-         if ((AS_Reshaping_Rules3[char1 .. char2 .. char3]) and (position >= 0)) then -- ligature 3 characters
-            local ligature = AS_Reshaping_Rules3[char1 .. char2 .. char3];
+         if ((AS_Reshaping_RulesC3[char1 .. char2 .. char3]) and (position >= 0)) then -- ligature 3 characters
+            local ligature = AS_Reshaping_RulesC3[char1 .. char2 .. char3];
             if (position == 0) then
                char1 = ligature.isolated;
             elseif (position == 1) then
@@ -384,8 +384,8 @@ function AS_UTF8reverse2(s)
                char1 = ligature.final;
             end
             pos = pos + charbytes2 + charbytes3;                                 -- we omit the next preceding letters
-         elseif ((AS_Reshaping_Rules2[char1 .. char2]) and (position >= 0)) then -- ligature 2 characters
-            local ligature = AS_Reshaping_Rules2[char1 .. char2];
+         elseif ((AS_Reshaping_RulesC2[char1 .. char2]) and (position >= 0)) then -- ligature 2 characters
+            local ligature = AS_Reshaping_RulesC2[char1 .. char2];
             if (position == 0) then
                char1 = ligature.isolated;
             elseif (position == 1) then
@@ -400,7 +400,7 @@ function AS_UTF8reverse2(s)
 
 
          -- check if the character has reshaping rules
-         local rules = AS_Reshaping_Rules[char1];
+         local rules = AS_Reshaping_RulesC[char1];
          if (rules) then
             -- apply reshaping rules based on the character's position in the string
             if (position == 0) then -- isolated letter
@@ -453,49 +453,49 @@ end
 -------------------------------------------------------------------------------------------------------
 -- the function create testing frame to determine the length of text in a frame
 
-function AS_CreateTestLine()
-   AS_TestLine = CreateFrame("Frame", "AS_TestLine", UIParent, "BasicFrameTemplateWithInset");
-   AS_TestLine:SetHeight(150);
-   AS_TestLine:SetWidth(300);
-   AS_TestLine:ClearAllPoints();
-   AS_TestLine:SetPoint("TOPLEFT", 20, -300); -- 20,-300
-   AS_TestLine.title = AS_TestLine:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-   AS_TestLine.title:SetPoint("CENTER", AS_TestLine.TitleBg);
-   AS_TestLine.title:SetText("Frame for testing width of text");
-   AS_TestLine.ScrollFrame = CreateFrame("ScrollFrame", nil, AS_TestLine, "UIPanelScrollFrameTemplate");
-   AS_TestLine.ScrollFrame:SetPoint("TOPLEFT", AS_TestLine.InsetBg, "TOPLEFT", 10, -40);
-   AS_TestLine.ScrollFrame:SetPoint("BOTTOMRIGHT", AS_TestLine.InsetBg, "BOTTOMRIGHT", -5, 10);
+function AS_CreateTestLine2()
+   AS_TestLine2 = CreateFrame("Frame", "AS_TestLine2", UIParent, "BasicFrameTemplateWithInset");
+   AS_TestLine2:SetHeight(150);
+   AS_TestLine2:SetWidth(300);
+   AS_TestLine2:ClearAllPoints();
+   AS_TestLine2:SetPoint("TOPLEFT", 20, -300); -- 20,-300
+   AS_TestLine2.title = AS_TestLine2:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+   AS_TestLine2.title:SetPoint("CENTER", AS_TestLine2.TitleBg);
+   AS_TestLine2.title:SetText("Frame for testing width of text");
+   AS_TestLine2.ScrollFrame = CreateFrame("ScrollFrame", nil, AS_TestLine2, "UIPanelScrollFrameTemplate");
+   AS_TestLine2.ScrollFrame:SetPoint("TOPLEFT", AS_TestLine2.InsetBg, "TOPLEFT", 10, -40);
+   AS_TestLine2.ScrollFrame:SetPoint("BOTTOMRIGHT", AS_TestLine2.InsetBg, "BOTTOMRIGHT", -5, 10);
 
-   AS_TestLine.ScrollFrame.ScrollBar:ClearAllPoints();
-   AS_TestLine.ScrollFrame.ScrollBar:SetPoint("TOPLEFT", AS_TestLine.ScrollFrame, "TOPRIGHT", -12, -18);
-   AS_TestLine.ScrollFrame.ScrollBar:SetPoint("BOTTOMRIGHT", AS_TestLine.ScrollFrame, "BOTTOMRIGHT", -7, 15);
-   CHchild = CreateFrame("Frame", nil, AS_TestLine.ScrollFrame);
+   AS_TestLine2.ScrollFrame.ScrollBar:ClearAllPoints();
+   AS_TestLine2.ScrollFrame.ScrollBar:SetPoint("TOPLEFT", AS_TestLine2.ScrollFrame, "TOPRIGHT", -12, -18);
+   AS_TestLine2.ScrollFrame.ScrollBar:SetPoint("BOTTOMRIGHT", AS_TestLine2.ScrollFrame, "BOTTOMRIGHT", -7, 15);
+   CHchild = CreateFrame("Frame", nil, AS_TestLine2.ScrollFrame);
    CHchild:SetSize(552, 100);
    CHchild.bg = CHchild:CreateTexture(nil, "BACKGROUND");
    CHchild.bg:SetAllPoints(true);
    CHchild.bg:SetColorTexture(0, 0.05, 0.1, 0.8);
-   AS_TestLine.ScrollFrame:SetScrollChild(CHchild);
-   AS_TestLine.text = CHchild:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-   AS_TestLine.text:SetPoint("TOPLEFT", CHchild, "TOPLEFT", 2, 0);
-   AS_TestLine.text:SetText("");
-   AS_TestLine.text:SetSize(DEFAULT_CHAT_FRAME:GetWidth(), 0);
-   AS_TestLine.text:SetJustifyH("LEFT");
-   AS_TestLine.CloseButton:SetPoint("TOPRIGHT", AS_TestLine, "TOPRIGHT", 0, 0);
-   AS_TestLine:Hide(); -- the frame is invisible in the game
+   AS_TestLine2.ScrollFrame:SetScrollChild(CHchild);
+   AS_TestLine2.text = CHchild:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+   AS_TestLine2.text:SetPoint("TOPLEFT", CHchild, "TOPLEFT", 2, 0);
+   AS_TestLine2.text:SetText("");
+   AS_TestLine2.text:SetSize(DEFAULT_CHAT_FRAME:GetWidth(), 0);
+   AS_TestLine2.text:SetJustifyH("LEFT");
+   AS_TestLine2.CloseButton:SetPoint("TOPRIGHT", AS_TestLine2, "TOPRIGHT", 0, 0);
+   AS_TestLine2:Hide(); -- the frame is invisible in the game
 end
 
 -------------------------------------------------------------------------------------------------------
 -- the function prepares Arabic text to be displayed in a specific window width
 
-function AS_ReverseAndPrepareLineText(Atext, Awidth, AfontSize)
+function AS_ReverseAndPrepareLineText2(Atext2, Awidth2, AfontSize2)
    local retstr = "";
-   if (Atext and Awidth and AfontSize) then
-      if (AS_TestLine == nil) then -- a own frame for displaying the translation of texts and determining the length
-         AS_CreateTestLine();
+   if (Atext2 and Awidth2 and AfontSize2) then
+      if (AS_TestLine2 == nil) then -- a own frame for displaying the translation of texts and determining the length
+         AS_CreateTestLine2();
       end
-      Atext = string.gsub(Atext, " #", "#");
-      Atext = string.gsub(Atext, "# ", "#");
-      local bytes = strlen(Atext);
+      Atext2 = string.gsub(Atext2, " #", "#");
+      Atext2 = string.gsub(Atext2, "# ", "#");
+      local bytes = strlen(Atext2);
       local pos = 1;
       local counter = 0;
       local link_start_stop = false;
@@ -507,8 +507,8 @@ function AS_ReverseAndPrepareLineText(Atext, Awidth, AfontSize)
       local char2 = "";
       local last_space = 0;
       while (pos <= bytes) do                                     -- UWAGA: tekst arabski jest podany wprost, od lewej są poszczególne znaki
-         charbytes = AS_UTF8charbytes(Atext, pos);                -- count of bytes (liczba bajtów znaku)
-         char1 = strsub(Atext, pos, pos + charbytes - 1);         -- pobrany znak litery
+         charbytes = AS_UTF8charbytes2(Atext2, pos);                -- count of bytes (liczba bajtów znaku)
+         char1 = strsub(Atext2, pos, pos + charbytes - 1);         -- pobrany znak litery
          newstr = newstr .. char1;                                -- dodaję kolejny odczytany znak
 
          if ((char2 .. char1 == "|r") and (pos < bytes)) then     -- start of the link
@@ -525,13 +525,13 @@ function AS_ReverseAndPrepareLineText(Atext, Awidth, AfontSize)
             last_space = last_space + charbytes;
          end
          if (link_start_stop == false) then -- nie jesteśmy wewnątrz linku - można sprawdzać
-            AS_TestLine:SetWidth(Awidth);   -- set the frame width to the text
-            AS_TestLine.text:SetFont(QTR_Font2, AfontSize);
-            AS_TestLine.text:SetText(AS_UTF8reverse2(newstr));
-            if ((char1 == '#') or (AS_TestLine.text:GetHeight() > AfontSize * 1.5)) then -- tekst nie mieści się już w 1 linii
+            AS_TestLine2:SetWidth(Awidth2);   -- set the frame width to the text
+            AS_TestLine2.text:SetFont(CH_Font, AfontSize2);
+            AS_TestLine2.text:SetText(AS_UTF8reverse2(newstr));
+            if ((char1 == '#') or (AS_TestLine2.text:GetHeight() > AfontSize2 * 1.5)) then -- tekst nie mieści się już w 1 linii
                newstr = string.sub(newstr, 1, strlen(newstr) - last_space);              -- tekst do ostatniej spacji
                newstr = string.gsub(newstr, "#", "");
-               retstr = retstr .. AS_AddSpaces(AS_UTF8reverse2(newstr), Awidth, AfontSize) .. "\n";
+               retstr = retstr .. AS_AddSpaces(AS_UTF8reverse2(newstr), Awidth2, AfontSize2) .. "\n";
                newstr = nextstr;
                nextstr = "";
                counter = 0;
@@ -540,7 +540,7 @@ function AS_ReverseAndPrepareLineText(Atext, Awidth, AfontSize)
          char2 = char1; -- zapamiętaj znak, potrzebne w następnej pętli
          pos = pos + charbytes;
       end
-      retstr = retstr .. AS_AddSpaces(AS_UTF8reverse2(newstr), Awidth, AfontSize);
+      retstr = retstr .. AS_AddSpaces(AS_UTF8reverse2(newstr), Awidth2, AfontSize2);
       retstr = string.gsub(retstr, "#", "");
       retstr = string.gsub(retstr, " \n", "\n"); -- space before newline code is useless
       retstr = string.gsub(retstr, "\n ", "\n"); -- space after newline code is useless
@@ -555,25 +555,25 @@ end
 function AS_AddSpaces(txt, width, fontsize)
    local chars_limitC = 300;    -- so much max. characters can fit on one line
 
-   if (AS_TestLine == nil) then -- a own frame for displaying the translation of texts and determining the length
-      AS_CreateTestLine();
+   if (AS_TestLine2 == nil) then -- a own frame for displaying the translation of texts and determining the length
+      AS_CreateTestLine2();
    end
    local count = 0;
    local text = txt;
-   AS_TestLine.text:SetWidth(width);
-   AS_TestLine.text:SetFont(QTR_Font2, fontsize);
-   AS_TestLine.text:SetText(text);
-   while ((AS_TestLine.text:GetHeight() < fontsize * 1.5) and (count < chars_limitC)) do
+   AS_TestLine2.text:SetWidth(width);
+   AS_TestLine2.text:SetFont(CH_Font, fontsize);
+   AS_TestLine2.text:SetText(text);
+   while ((AS_TestLine2.text:GetHeight() < fontsize * 1.5) and (count < chars_limitC)) do
       count = count + 1;
       text = " " .. text;
-      AS_TestLine.text:SetText(text);
+      AS_TestLine2.text:SetText(text);
    end
    if (count < chars_limitC) then -- failed to properly add leading spaces
       for i = 2, count, 1 do      -- spaces are added to the left of the text
          txt = " " .. txt;
       end
    end
-   AS_TestLine.text:SetText(txt);
+   AS_TestLine2.text:SetText(txt);
 
    return (txt);
 end
