@@ -482,7 +482,7 @@ local function CH_OnChar(self, character)    -- wprowadzono znak litery z klawia
             end
             tinsert(CH_BuforEditBox, CH_BuforCursor, character);
          end
-         local spaces = "( )?؟!,.;:،";             -- letters that we treat as a space
+         local spaces = '.@_={}~`^&*[]+/%<>( )?$#%؟!,;:،|\"-';             -- letters that we treat as a space
          if (AS_UTF8find2(spaces, character) == false) then       -- nie wprowadzono znaku z listy spaces      
             if (((character >= "؀") and (character <= "ݿ")) or ((string.sub(character,1,1) == "|") and (CH_ED_mode == 1))) then  -- mamy literę arabską
                if (CH_ED_cursor_move == 0) then    -- mamy tryb przesuwania w prawo - przełącz na tryb przesuwania w lewo od wpisanego znaku
